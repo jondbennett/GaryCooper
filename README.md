@@ -13,8 +13,8 @@ Additional relay to control the coop light.
 
 My wife and I got tired of getting up early to let the chickens out. Like any good geek, I said I could solve that problem with a computer and some additional hardware.I called the project Gary Cooper; Gary for short. I wanted a solution that was simple to operate:
 
-1) Turn it on.  
-2) Forget it.  
+1. Turn it on.
+2. Forget it.
 
 The biggest part of the "additional hardware" is the stuff to physically open and close the coop door. I am using an old garage door opener. Once that was installed, software development commenced. The problem is more difficult than it first appears.
 
