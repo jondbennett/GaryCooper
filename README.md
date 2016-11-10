@@ -1,20 +1,20 @@
 # GaryCooper
 An arduino project to automatically open and close a chicken coop door based on sunrise and sunset times.
 
-Basic hardware requirements:
-Arduino (I used a Mega 2560)
-GPS receiver.
-Relay to control the coop door opener.
+Basic hardware requirements:  
+Arduino (I used a Mega 2560)  
+GPS receiver.  
+Relay to control the coop door opener.  
 
-Advanced hardware requirements:
-Beeper for notification.
-Radio telemetry link (originally for drones) to send status info back to the house.
-Additional relay to control the coop light.
+Advanced hardware requirements:  
+Beeper for notification.  
+Radio telemetry link (originally for drones) to send status info back to the house.  
+Additional relay to control the coop light.  
 
 My wife and I got tired of getting up early to let the chickens out. Like any good geek, I said I could solve that problem with a computer and some additional hardware.I called the project Gary Cooper; Gary for short. I wanted a solution that was simple to operate:
 
-1) Turn it on.
-2) Forget it.
+1) Turn it on.  
+2) Forget it.  
 
 The biggest part of the "additional hardware" is the stuff to physically open and close the coop door. I am using an old garage door opener. Once that was installed, software development commenced. The problem is more difficult than it first appears.
 
