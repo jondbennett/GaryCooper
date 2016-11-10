@@ -120,7 +120,7 @@ void setup()
 	// Prep the update timer. This delay
 	// allows the GPS to get some data before we start
 	// processing more slowly
-	g_timer = millis() + (MILLIS_PER_SECOND * 2);
+	g_timer = millis() + (MILLIS_PER_SECOND * 5);
 }
 
 void loop()
