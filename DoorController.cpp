@@ -126,6 +126,9 @@ void CDoorController::checkTime()
 		toggleDoorState();
 	}
 
+	// Send current door state to the telemetry port
+	telemetrySend(telemetry_tag_door_state, (double)m_doorOpen);
+
 #ifdef DEBUG_DOOR_CONTROLLER
 	if(doorShouldBeOpen)
 		DEBUGSERIAL.println(PMS("CDoorController: Coop door should be OPEN."));
@@ -145,7 +148,5 @@ void CDoorController::toggleDoorState()
 
 	// Show the door state on the LED (1 = open)
 	digitalWrite(PIN_DOOR_STATE_LED, m_doorOpen);
-
-	telemetrySend(telemetry_tag_door_state, (double)m_doorOpen);
 }
 

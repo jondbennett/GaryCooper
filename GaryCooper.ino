@@ -41,7 +41,6 @@ CSunCalc g_sunCalc;
 
 #define MILLIS_PER_SECOND   (1000L)
 #define SECONDS_BETWEEN_UPDATES	(60L)
-//#define SECONDS_BETWEEN_UPDATES	(5L)
 
 unsigned long g_timer;
 
