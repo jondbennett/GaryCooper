@@ -102,6 +102,10 @@ void CLightController::loadSettings(CSaveController &_saveController)
 
 void CLightController::setup()
 {
+
+	// Setup the door relay
+	pinMode(PIN_DOOR_RELAY, OUTPUT);
+	digitalWrite(PIN_DOOR_RELAY, LOW);
 }
 
 void CLightController::checkTime()
@@ -204,6 +208,8 @@ void CLightController::setLightOn(bool _on)
 #endif
 
 	m_lightIsOn = _on;
+
+	digitalWrite(PIN_DOOR_RELAY, m_lightIsOn?HIGH:LOW);
 
 	telemetrySend(telemetry_tag_light_state, (double)m_lightIsOn);
 
