@@ -115,7 +115,7 @@ void setup()
 
 	// Beep to indicate starting the main loop
 	g_beepController.setup();
-	g_beepController.beep(BEEP_FREQ, 50, 50, 2);
+	g_beepController.beep(BEEP_FREQ_INFO, 50, 50, 2);
 
 	// Prep the update timer. This delay
 	// allows the GPS to get some data before we start
@@ -177,7 +177,7 @@ void loop()
 			DEBUGSERIAL.println(PMS("*** NOT RECEIVING ANY DATA FROM GPS. ***"));
 
 			g_GPSParser.getGPSData().clear();
-			g_beepController.beep(BEEP_FREQ, 100, 50, 3);
+			g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, 1);
 			telemetrySend(telemetry_tag_error, telemetry_error_GPS_no_data);
 		}
 		s_gpsDataStreamActive = false;
@@ -190,7 +190,7 @@ void loop()
 		}
 		else
 		{
-			g_beepController.beep(BEEP_FREQ, 100, 50, 4);
+			g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, 2);
 		}
 	}
 }

@@ -119,9 +119,9 @@ void CDoorController::checkTime()
 	{
 #ifdef COOPDOOR_CHANGE_BEEPER
 		if(doorShouldBeOpen)
-			g_beepController.beep(BEEP_FREQ, 900, 100, 15);
+			g_beepController.beep(BEEP_FREQ_INFO, 900, 100, 2);
 		else
-			g_beepController.beep(BEEP_FREQ, 500, 500, 15);
+			g_beepController.beep(BEEP_FREQ_INFO, 500, 500, 2);
 #endif
 		toggleDoorState();
 	}

@@ -43,7 +43,10 @@ class CBeepController
 		void beep(int _iFreq, int _iOnTime, int _iOffTime, int _iRepeats);
 };
 
-#define BEEP_FREQ					(4000)		// Hz
+#define BEEP_FREQ_BEST		(4000)		// Hz
+
+#define BEEP_FREQ_ERROR		(4000)
+#define BEEP_FREQ_INFO		(2000)
 
 extern CBeepController g_oBeepController;
 #endif
