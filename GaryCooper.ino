@@ -133,7 +133,6 @@ void loop()
 	{
 		loadSettings();
 		settingsLoaded = true;
-		telemetrySend(telemetry_tag_startup, TELEMETRY_VALUE_NULL);
 	}
 
 	// Let the door controller time its relay
@@ -170,6 +169,14 @@ void loop()
 	{
 		// Prep for next update
 		g_timer = millis() + (MILLIS_PER_SECOND * SECONDS_BETWEEN_UPDATES);
+
+		// Send startup notice
+		static bool s_startupTelemetrySent = false;
+		if(!s_startupTelemetrySent)
+		{
+			s_startupTelemetrySent = true;
+			telemetrySend(telemetry_tag_startup, TELEMETRY_VALUE_NULL);
+		}
 
 		// If the GPS is not sending any data then report an error
 		if(!s_gpsDataStreamActive)
