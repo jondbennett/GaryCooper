@@ -25,15 +25,15 @@ To make things more complicated, sunrise and sunset times depend on the date and
 Did you know that chickens adjust their egg output based on day length? Longer days yield more eggs per week. Shorter days -  fewer eggs. However, by adding additional light in their coop in the morning and evening we can fool their bodies into thinking the day is longer. Gary handles that as well.
 
 Basic Operation:
-The arduino reads the data from the GPS and passes it to the GPS parser. If there is valid data, the data is passed to a sunrise/sunset calculator object which figures the times based on late and location.
+The arduino reads the data from the GPS and passes it to the GPS parser. If there is valid data, the data is passed to a sunrise/sunset calculator object which figures the times based on date and location.
 
-A door controller object monitors the current time relative to the sunrise and sunset times and decides when to open and close the door. I call the amount of time the door is open the chicken's day length.
+A door controller object monitors the current time relative to the sunrise and sunset times and decides when to open and close the door. I call the amount of time the door is open the chicken's "day length."
 
-There is another object that controls the coop light. It monitors the chicken's day length and decides if the light should be turned on early and left on late. This object also provides additional light after the door is opened in the morning to help the chickens get their day started, and turns it on before the door closes in the evening to draw them back to the coop.
+There is another object that controls the coop light. It monitors the chicken's day length and decides if the light should be turned on early and left on late. This object also provides additional light after the door is opened in the morning to help the chickens get their day started, and turns it on before the door closes in the evening to draw them back to the coop. The light is off most of the day.
 
-Finally, status and error information is transmitted back to the house to alert us to gps lock problems, the door being stuck, and such things.
+Finally, status and error information is transmitted back to the house. The status info lets us know when the door opens and closes, and when the light is on. The error information is to alert us to gps lock problems, the door being stuck, and such things.
 
-This project depends on my GPSParser, PMS, and SaveController libraries.
+This project depends on my GPSParser, PMS, and SaveController libraries, so you'll need to download them as well.
 
 The files "sunriset.h" and "sunriset.cpp" were downloaded as-is from the:
 http://www.stjarnhimlen.se/
