@@ -177,7 +177,7 @@ void loop()
 			DEBUGSERIAL.println(PMS("*** NOT RECEIVING ANY DATA FROM GPS. ***"));
 
 			g_GPSParser.getGPSData().clear();
-
+			g_beepController.beep(BEEP_FREQ, 100, 50, 3);
 			telemetrySend(telemetry_tag_error, telemetry_error_GPS_no_data);
 		}
 		s_gpsDataStreamActive = false;
@@ -187,6 +187,10 @@ void loop()
 		{
 			g_doorController.checkTime();
 			g_lightController.checkTime();
+		}
+		else
+		{
+			g_beepController.beep(BEEP_FREQ, 100, 50, 4);
 		}
 	}
 }
