@@ -58,7 +58,7 @@ public:
 	double getSunsetTime(eSunrise_Sunset_T _type);
 
 
-	bool processGPSData(CGPSParser_Data &_gpsData);
+	bool processGPSData(CGPSParserData &_gpsData);
 };
 
 #endif

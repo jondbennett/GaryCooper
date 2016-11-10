@@ -97,7 +97,7 @@ double CSunCalc::getSunsetTime(eSunrise_Sunset_T _type)
 	return CSunCalc_INVALID_TIME;
 }
 
-bool CSunCalc::processGPSData(CGPSParser_Data &_gpsData)
+bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 {
 	// Assume he worst
 	m_currentTime = CSunCalc_INVALID_TIME;
