@@ -1,5 +1,5 @@
 # GaryCooper
-An arduino project to automatically open and close a chicken coop door based on
+An Arduino project to automatically open and close a chicken coop door based on
 sunrise and sunset times.
 
 Basic hardware requirements:  
@@ -53,7 +53,7 @@ additional light in their coop in the morning and evening we can fool their
 bodies into thinking the day is longer. Gary handles that as well.
 
 Basic Operation:
-The arduino reads the data from the GPS and passes it to the GPS parser. If
+The Arduino reads the data from the GPS and passes it to the GPS parser. If
 there is valid data, the data is passed to a sunrise/sunset calculator object
 which figures the times based on date and location.
 
