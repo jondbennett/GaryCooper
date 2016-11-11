@@ -191,7 +191,10 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 
 	// Telemetry
 	telemetrySend(telemetry_tag_currentTime, m_currentTime);
+
 	telemetrySend(telemetry_tag_GPSNSats, _gpsData.m_nSatellites);
+	telemetrySend(telemetry_tag_lat, lat);
+	telemetrySend(telemetry_tag_lon, lon);
 
 #ifdef DEBUG_SUNCALC
 	DEBUG_SERIAL.print(PMS("Current Time (UTC): "));
