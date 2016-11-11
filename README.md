@@ -4,15 +4,17 @@ project to automatically open and close a chicken coop door based on
 sunrise and sunset times.
 
 Basic hardware requirements:
-Arduino (I used a [Mega 2560](http://www.microcenter.com/product/431995/Arduino_Mega_2560))
-GPS receiver.
-Relay to control the coop door opener.
+
+* Arduino (I used a [Mega 2560](http://www.microcenter.com/product/431995/Arduino_Mega_2560))
+* GPS receiver.
+* Relay to control the coop door opener.
 
 Advanced hardware requirements:
-Beeper for notification.
-Radio telemetry link (originally for drones) to send status info back to the
-house.
-Additional relay to control the coop light.
+
+* Beeper for notification.
+* Radio telemetry link (originally for drones) to send status info back to the
+  house.
+* Additional relay to control the coop light.
 
 My wife and I got tired of getting up early to let the chickens out. Like any
 good geek, I said I could solve that problem with a computer and some
