@@ -70,8 +70,8 @@ There is another object that controls the coop light. It monitors the chicken's
 day length and decides if the light should be turned on early and left on late.
 This object also provides additional light after the door is opened in the
 morning to help the chickens get their day started, and turns it on before the
-door closes in the evening to draw them back to the coop. The light is off most
-of the day.
+door closes in the evening to draw them back into the coop. The light is off
+most of the day.
 
 Status and error information is transmitted back to the house. The status info
 lets us know when the door opens and closes, and when the light is on. The
