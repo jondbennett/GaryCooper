@@ -49,7 +49,8 @@ problem, this project uses a GPS receiver to determine both date and location.
 From there, the sunrise and sunset times are calculated and the door is opened
 and closed based on these times. (It is actually a little more complicated than
 that, but those complications are handled in the code.) All times are handled
-in UTC, so daylight saving time does not complicate the problem.
+in [UTC](https://en.wikipedia.org/wiki/UTC), so daylight saving time does not
+complicate the problem.
 
 Did you know that chickens adjust their egg output based on day length? Longer
 days yield more eggs per week. Shorter days -  fewer eggs. However, by adding
