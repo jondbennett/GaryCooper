@@ -11,18 +11,16 @@ typedef enum
 	telemetry_tag_GPSNSats,
 	telemetry_tag_lat,
 	telemetry_tag_lon,
-
 	telemetry_tag_currentTime,
+
 	telemetry_tag_doorOpenTime,
 	telemetry_tag_doorCloseTime,
+	telemetry_tag_door_state,
 
 	telemetry_tag_morningLightOnTime,
 	telemetry_tag_morningLightOffTime,
-
 	telemetry_tag_eveningLightOnTime,
 	telemetry_tag_eveningLightOffTime,
-
-	telemetry_tag_door_state,
 	telemetry_tag_light_state,
 } telemetryTagE;
 
