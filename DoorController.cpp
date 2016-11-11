@@ -114,7 +114,7 @@ void CDoorController::checkTime()
 		return;
 	}
 
-	bool doorShouldBeOpen = (current >= sunrise) && (current < sunset);
+	bool doorShouldBeOpen = timeIsBetween(current, sunrise, sunset);
 	if(m_doorOpen != doorShouldBeOpen)
 	{
 #ifdef COOPDOOR_CHANGE_BEEPER

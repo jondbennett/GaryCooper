@@ -30,25 +30,6 @@ static void CLight_Controller_clipTime(double &_t)
 	while (_t > 24.) _t -= 24.;
 }
 
-static bool CLightController_timeIsBetween(double _currentTime, double _first, double _second)
-{
-	if(_first < _second)
-	{
-		if((_currentTime >= _first) && (_currentTime < _second))
-			return true;
-		else
-			return false;
-	}
-	else
-	{
-		if(	((_currentTime > _first) && (_currentTime < 24.)) ||
-			((_currentTime > 0.) && (_currentTime < _second)) )
-			return true;
-		else
-			return false;
-	}
-}
-
 ////////////////////////////////////////////////////////////
 // Control the Chicken coop light to adjust for shorter days
 // in the winter and keep egg production up.
@@ -194,9 +175,9 @@ void CLightController::checkTime()
 
 	// OK, now figure if the light should be on or off.
 	if(currentTime <= midDay)
-		setLightOn(CLightController_timeIsBetween(currentTime, morningLightOnTime, morningLightOffTime));
+		setLightOn(timeIsBetween(currentTime, morningLightOnTime, morningLightOffTime));
 	else
-		setLightOn(CLightController_timeIsBetween(currentTime, eveningLightOnTime, eveningLightOffTime));
+		setLightOn(timeIsBetween(currentTime, eveningLightOnTime, eveningLightOffTime));
 }
 
 void CLightController::setLightOn(bool _on)
