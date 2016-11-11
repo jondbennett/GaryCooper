@@ -35,12 +35,12 @@ think. Their wake/sleep cycle depends on the length of the days, and their
 circadian rhythms as influenced by each day's sunrise and sunset times. They
 wake up each morning, even if it is very overcast and the light level is quite
 low. This means that a simple light level sensor will have problems getting in
-sync with the birds. On overcast days opening and closing the door based on
-outside light risks letting the birds out late and, even worse, locking some
-birds out of the coop by shutting the door too early in the evening. Chickens
-left outside over night become racoon and weasel food, which seriously impacts
-their ability to produce eggs. So, controlling the door based on sunrise and
-sunset times is a better choice.
+sync with the birds. On overcast days opening and closing the door based on a
+simple light level sensor risks letting the birds out late and, even worse,
+locking some birds out of the coop by shutting the door too early in the
+evening. Chickens left outside over night become racoon and weasel food, which
+seriously impacts their ability to produce eggs. So, controlling the door based
+on sunrise and sunset times is a better choice.
 
 To make things more complicated, sunrise and sunset times depend on the date
 and the coop's location on Earth. Days are longer during the summer months and
