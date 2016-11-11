@@ -25,11 +25,23 @@ public:
 
 	void setup();
 
-	eSunrise_Sunset_T getSunriseType() { return m_sunriseType;	}
-	void setSunriseType(eSunrise_Sunset_T _sunriseType) { m_sunriseType = _sunriseType; }
+	eSunrise_Sunset_T getSunriseType()
+	{
+		return m_sunriseType;
+	}
+	void setSunriseType(eSunrise_Sunset_T _sunriseType)
+	{
+		m_sunriseType = _sunriseType;
+	}
 
-	eSunrise_Sunset_T getSunsetType() { return m_sunsetType;	}
-	void setSunsetType(eSunrise_Sunset_T _sunsetType) { m_sunsetType = _sunsetType; }
+	eSunrise_Sunset_T getSunsetType()
+	{
+		return m_sunsetType;
+	}
+	void setSunsetType(eSunrise_Sunset_T _sunsetType)
+	{
+		m_sunsetType = _sunsetType;
+	}
 
 	void saveSettings(CSaveController &_saveController);
 	void loadSettings(CSaveController &_saveController);

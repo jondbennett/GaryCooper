@@ -9,15 +9,12 @@
 
 #include "GaryCooper.h"
 #include "Pins.h"
-#include "SlidingBuf.h"
-#include "Comm_Arduino.h"
 #include "SunCalc.h"
 #include "Telemetry.h"
 #include "BeepController.h"
 #include "DoorController.h"
 
 extern CBeepController g_beepController;
-extern CComm_Arduino g_telemetryComm;
 extern CSunCalc g_sunCalc;
 
 ////////////////////////////////////////////////////////////
@@ -64,20 +61,20 @@ void CDoorController::loadSettings(CSaveController &_saveController)
 	setSunsetType(sunsetType);
 
 #ifdef DEBUG_DOOR_CONTROLLER
-	DEBUGSERIAL.print(PMS("CDoorController: Sunrise type is "));
-	DEBUGSERIAL.println((m_sunriseType == srsst_astronomical)? PMS("astronomical.") :
-						(m_sunriseType == srsst_nautical)? PMS("nautical.") :
-						(m_sunriseType == srsst_civil)? PMS("civil.") :
-						(m_sunriseType == srsst_common)? PMS("common.") :
-						PMS("** INVALID **")
+	DEBUG_SERIAL.print(PMS("CDoorController: Sunrise type is "));
+	DEBUG_SERIAL.println((m_sunriseType == srsst_astronomical) ? PMS("astronomical.") :
+						 (m_sunriseType == srsst_nautical) ? PMS("nautical.") :
+						 (m_sunriseType == srsst_civil) ? PMS("civil.") :
+						 (m_sunriseType == srsst_common) ? PMS("common.") :
+						 PMS("** INVALID **")
 						);
 
-	DEBUGSERIAL.print(PMS("CDoorController: Sunset type is "));
-	DEBUGSERIAL.println((m_sunsetType == srsst_astronomical)? PMS("astronomical.") :
-						(m_sunsetType == srsst_nautical)? PMS("nautical.") :
-						(m_sunsetType == srsst_civil)? PMS("civil.") :
-						(m_sunsetType == srsst_common)? PMS("common.") :
-						PMS("** INVALID **")
+	DEBUG_SERIAL.print(PMS("CDoorController: Sunset type is "));
+	DEBUG_SERIAL.println((m_sunsetType == srsst_astronomical) ? PMS("astronomical.") :
+						 (m_sunsetType == srsst_nautical) ? PMS("nautical.") :
+						 (m_sunsetType == srsst_civil) ? PMS("civil.") :
+						 (m_sunsetType == srsst_common) ? PMS("common.") :
+						 PMS("** INVALID **")
 						);
 #endif
 }
@@ -95,22 +92,22 @@ void CDoorController::checkTime()
 	double current = g_sunCalc.getCurrentTime();
 
 #ifdef DEBUG_DOOR_CONTROLLER
-	DEBUGSERIAL.print(PMS("CDoorController: Door open from "));
+	DEBUG_SERIAL.print(PMS("CDoorController: Door open from "));
 	debugPrintDoubleTime(sunrise, false);
-	DEBUGSERIAL.print(PMS(" - "));
+	DEBUG_SERIAL.print(PMS(" - "));
 	debugPrintDoubleTime(sunset, false);
-	DEBUGSERIAL.println(PMS(" (UTC)"));
+	DEBUG_SERIAL.println(PMS(" (UTC)"));
 #endif
 
 	if(!g_sunCalc.isValidTime(sunrise))
 	{
-		DEBUGSERIAL.println(PMS("CDoorController: got invalid sunrise time"));
+		DEBUG_SERIAL.println(PMS("CDoorController: got invalid sunrise time"));
 		return;
 	}
 
 	if(!g_sunCalc.isValidTime(sunset))
 	{
-		DEBUGSERIAL.println(PMS("CDoorController: got invalid sunset time"));
+		DEBUG_SERIAL.println(PMS("CDoorController: got invalid sunset time"));
 		return;
 	}
 
@@ -131,10 +128,10 @@ void CDoorController::checkTime()
 
 #ifdef DEBUG_DOOR_CONTROLLER
 	if(doorShouldBeOpen)
-		DEBUGSERIAL.println(PMS("CDoorController: Coop door should be OPEN."));
+		DEBUG_SERIAL.println(PMS("CDoorController: Coop door should be OPEN."));
 	else
-		DEBUGSERIAL.println(PMS("CDoorController: Coop door should be CLOSED."));
-	DEBUGSERIAL.println();
+		DEBUG_SERIAL.println(PMS("CDoorController: Coop door should be CLOSED."));
+	DEBUG_SERIAL.println();
 #endif
 }
 

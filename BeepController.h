@@ -16,31 +16,34 @@ typedef enum
 
 class CBeepController
 {
-	private:
-		Beep_StateT m_eState;
+private:
+	Beep_StateT m_eState;
 
-		unsigned long m_ulTimer;
+	unsigned long m_ulTimer;
 
-		void setState(Beep_StateT _eState);
+	void setState(Beep_StateT _eState);
 
-		int m_iFreq;
-		int m_iOnTime;
-		int m_iOffTime;
-		int m_iRepeats;
+	int m_iFreq;
+	int m_iOnTime;
+	int m_iOffTime;
+	int m_iRepeats;
 
-		bool m_bAlarm;
+	bool m_bAlarm;
 
-		int m_iBeepOutPin;
-		int m_iBeepGndPin;
+	int m_iBeepOutPin;
+	int m_iBeepGndPin;
 
-	public:
-		CBeepController(int _iPinOut, int _iPinGnd = -1);
-		Beep_StateT state() { return m_eState; }
+public:
+	CBeepController(int _iPinOut, int _iPinGnd = -1);
+	Beep_StateT state()
+	{
+		return m_eState;
+	}
 
-		void setup();
-		void tick();
+	void setup();
+	void tick();
 
-		void beep(int _iFreq, int _iOnTime, int _iOffTime, int _iRepeats);
+	void beep(int _iFreq, int _iOnTime, int _iOffTime, int _iRepeats);
 };
 
 #define BEEP_FREQ_BEST		(4000)		// Hz

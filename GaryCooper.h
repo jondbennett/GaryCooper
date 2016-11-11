@@ -1,10 +1,6 @@
 #ifndef GaryCooper_h
 #define GaryCooper_h
 
-// Debug stuff
-#define DEBUGSERIAL	Serial
-#define DEBUG_BAUD_RATE	(9600)
-
 //#define	DEBUG_RAW_GPS
 #define DEBUG_SUNCALC
 #define	DEBUG_DOOR_CONTROLLER

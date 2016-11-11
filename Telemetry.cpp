@@ -1,19 +1,14 @@
-
 #include <Arduino.h>
 
 #include <PMS.h>
 #include <GPSParser.h>
 
+#include "Pins.h"
 #include "GaryCooper.h"
 
 #include "Telemetry.h"
 
 extern CGPSParser g_GPSParser;
-
-void telemetrySetup()
-{
-	TELEMETRY_SERIAL_PORT.begin(TELEMETRY_BAUD_RATE);
-}
 
 void telemetrySend(telemetryTagE _tag, double _value)
 {
@@ -31,29 +26,45 @@ void telemetrySend(telemetryTagE _tag, double _value)
 		second = gpsData.m_time.m_second;
 	}
 
-	const char *sep = ".";
-	TELEMETRY_SERIAL_PORT.print(year);		TELEMETRY_SERIAL_PORT.print(sep);
-	TELEMETRY_SERIAL_PORT.print(month);		TELEMETRY_SERIAL_PORT.print(sep);
-	TELEMETRY_SERIAL_PORT.print(day);		TELEMETRY_SERIAL_PORT.print(sep);
-	TELEMETRY_SERIAL_PORT.print(hour);		TELEMETRY_SERIAL_PORT.print(sep);
-	TELEMETRY_SERIAL_PORT.print(minute);	TELEMETRY_SERIAL_PORT.print(sep);
-	TELEMETRY_SERIAL_PORT.print(second);	TELEMETRY_SERIAL_PORT.print(PMS(":"));
+	// Info for the separators
+	const char *start = "$";
+	const char *data_sep = ",";
+	const char *cs_sep = "*";
 
-	// Init the value which will include
+	// Dump the timestamp
+	TELEMETRY_SERIAL.print(start);
+	TELEMETRY_SERIAL.print(year);
+	TELEMETRY_SERIAL.print(data_sep);
+	TELEMETRY_SERIAL.print(month);
+	TELEMETRY_SERIAL.print(data_sep);
+	TELEMETRY_SERIAL.print(day);
+	TELEMETRY_SERIAL.print(data_sep);
+	TELEMETRY_SERIAL.print(hour);
+	TELEMETRY_SERIAL.print(data_sep);
+	TELEMETRY_SERIAL.print(minute);
+	TELEMETRY_SERIAL.print(data_sep);
+	TELEMETRY_SERIAL.print(second);
+	TELEMETRY_SERIAL.print(data_sep);
+
+	// Dump the actual data
 	String tag(_tag);
 	String value(_value);
 
 	String telemetryString;
 	telemetryString = tag;
-	telemetryString += (",");
+	telemetryString += data_sep;
 	telemetryString += (value);
-	telemetryString += (",");
 
+	// Calculate the checksum
 	unsigned sum = 0;
 	for(unsigned _ = 0; _ < telemetryString.length(); ++_)
 		sum ^= telemetryString[_];
-	String sumString(sum);
+	String sumString(sum, HEX);
+
+	// Add the checksum to the end
+	telemetryString += cs_sep;
 	telemetryString += sumString;
 
-	TELEMETRY_SERIAL_PORT.println(telemetryString);
+	// Send the data
+	TELEMETRY_SERIAL.println(telemetryString);
 }

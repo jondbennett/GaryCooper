@@ -106,10 +106,10 @@ Released to the public domain by Paul Schlyter, December 1992
 /* Function prototypes */
 
 double __daylen__( int year, int month, int day, double lon, double lat,
-                   double altit, int upper_limb );
+				   double altit, int upper_limb );
 
 int __sunriset__( int year, int month, int day, double lon, double lat,
-                  double altit, int upper_limb, double *rise, double *set );
+				  double altit, int upper_limb, double *rise, double *set );
 
 void sunpos( double d, double *lon, double *r );
 

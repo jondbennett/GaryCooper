@@ -7,29 +7,23 @@
 
 #include "GaryCooper.h"
 #include "Pins.h"
-#include "SlidingBuf.h"
-#include "Comm_Arduino.h"
 #include "SunCalc.h"
 #include "Telemetry.h"
 #include "BeepController.h"
 #include "DoorController.h"
 #include "LightController.h"
 
-// Door Controller
-CDoorController g_doorController;
-
-// Light Controller
-CLightController g_lightController;
-
-// GPS comm link and parser
-#define GPS_SERIAL_PORT  (1)
-#define GPS_BAUD_RATE (9600)
-CComm_Arduino g_GPSComm;
+// GPS parser
 CGPSParser g_GPSParser;
 
-CComm_Arduino g_telemetryComm;
+// Door controller
+CDoorController g_doorController;
 
-// Beeper
+// Light controller
+CLightController g_lightController;
+
+
+// Beep controller
 CBeepController g_beepController(PIN_BEEPER);
 
 // Settings controller
@@ -46,7 +40,7 @@ unsigned long g_timer;
 
 void saveSettings()
 {
-	DEBUGSERIAL.print(PMS("Save settings... "));
+	DEBUG_SERIAL.print(PMS("Save settings... "));
 
 	// Make sure the header is correct
 	g_saveController.updateHeader(GARYCOOPER_DATA_VERSION);
@@ -58,33 +52,33 @@ void saveSettings()
 	g_doorController.saveSettings(g_saveController);
 	g_lightController.saveSettings(g_saveController);
 
-	DEBUGSERIAL.println(PMS("complete."));
+	DEBUG_SERIAL.println(PMS("complete."));
 }
 
 void loadSettings()
 {
-	DEBUGSERIAL.print(PMS("Load settings checking header version: "));
+	DEBUG_SERIAL.print(PMS("Load settings checking header version: "));
 
 	// If the data version is incorrect then we need to update the EEPROM
 	// to default settings
 	int headerVersion = g_saveController.getDataVersion();
-	DEBUGSERIAL.print(headerVersion);
-	DEBUGSERIAL.print(PMS(" - "));
+	DEBUG_SERIAL.print(headerVersion);
+	DEBUG_SERIAL.print(PMS(" - "));
 
 	if(headerVersion != GARYCOOPER_DATA_VERSION)
 	{
-		DEBUGSERIAL.println(PMS("INCORRECT."));
+		DEBUG_SERIAL.println(PMS("INCORRECT."));
 
 		// Save defaults from object constructors
-		DEBUGSERIAL.println(PMS("Saving default settings."));
+		DEBUG_SERIAL.println(PMS("Saving default settings."));
 		saveSettings();
 	}
 	else
 	{
-		DEBUGSERIAL.println(PMS("CORRECT."));
+		DEBUG_SERIAL.println(PMS("CORRECT."));
 	}
 
-	DEBUGSERIAL.println(PMS("Loading settings... "));
+	DEBUG_SERIAL.println(PMS("Loading settings... "));
 
 	// Make sure we start at the beginning
 	g_saveController.rewind();
@@ -92,19 +86,19 @@ void loadSettings()
 	g_doorController.loadSettings(g_saveController);
 	g_lightController.loadSettings(g_saveController);
 
-	DEBUGSERIAL.println(PMS("Load settings complete."));
+	DEBUG_SERIAL.println(PMS("Load settings complete."));
 }
 
 void setup()
 {
 	// Prep debug port
-	DEBUGSERIAL.begin(DEBUG_BAUD_RATE);
+	DEBUG_SERIAL.begin(DEBUG_BAUD_RATE);
 
-	// Prep telemetry
-	telemetrySetup();
+	// Prep the GPS port
+	GPS_SERIAL.begin(GPS_BAUD_RATE);
 
-	// Prep the GPS comm port
-	g_GPSComm.open(GPS_SERIAL_PORT, GPS_BAUD_RATE);
+	// Prep the telemetry port
+	TELEMETRY_SERIAL.begin(TELEMETRY_BAUD_RATE);
 
 	// Setup the door controller
 	g_doorController.setup();
@@ -140,22 +134,23 @@ void loop()
 	// Let the beep controller run
 	g_beepController.tick();
 
-	// Cycle the GPS comm link
-	g_GPSComm.tick();
-
 	// Process all available GPS data
-	while(g_GPSComm.bytesInReceiveBuffer())
+	while(GPS_SERIAL.available())
 	{
 		unsigned char GPSData[256];
 		unsigned int GPSDataLen = 0;
 
-		GPSDataLen = g_GPSComm.read((unsigned char *)GPSData, sizeof(GPSData - 1));
+		GPSDataLen = GPS_SERIAL.available();
+		if(GPSDataLen > sizeof(GPSData - 1))
+			GPSDataLen = sizeof(GPSData - 1);
+
+		GPSDataLen = GPS_SERIAL.readBytes((unsigned char *)GPSData, GPSDataLen);
 		if(GPSDataLen)
 		{
 #ifdef DEBUG_RAW_GPS
 			GPSData[GPSDataLen] = '\0';
 			String rawGPS((const char *)GPSData);
-			DEBUGSERIAL.print(rawGPS);
+			DEBUG_SERIAL.print(rawGPS);
 #endif
 
 			g_GPSParser.parse(GPSData, GPSDataLen);
@@ -180,7 +175,7 @@ void loop()
 		// If the GPS is not sending any data then report an error
 		if(!s_gpsDataStreamActive)
 		{
-			DEBUGSERIAL.println(PMS("*** NOT RECEIVING ANY DATA FROM GPS. ***"));
+			DEBUG_SERIAL.println(PMS("*** NOT RECEIVING ANY DATA FROM GPS. ***"));
 
 			g_GPSParser.getGPSData().clear();
 			g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, 1);
@@ -214,7 +209,7 @@ bool timeIsBetween(double _currentTime, double _first, double _second)
 	else
 	{
 		if(	((_currentTime >= _first) && (_currentTime < 24.)) ||
-			((_currentTime > 0.) && (_currentTime < _second)) )
+				((_currentTime > 0.) && (_currentTime < _second)) )
 			return true;
 		else
 			return false;
@@ -225,10 +220,10 @@ void debugPrintDoubleTime(double _t, bool _newline)
 {
 	int hour = (int)_t;
 	int minute = 60. * (_t - hour);
-	DEBUGSERIAL.print(hour);
-	DEBUGSERIAL.print(PMS(":"));
-	DEBUGSERIAL.print(minute);
-	if(_newline) DEBUGSERIAL.println();
+	DEBUG_SERIAL.print(hour);
+	DEBUG_SERIAL.print(PMS(":"));
+	DEBUG_SERIAL.print(minute);
+	if(_newline) DEBUG_SERIAL.println();
 }
 
 

@@ -6,10 +6,9 @@
 #include <PMS.h>
 #include <GPSParser.h>
 
+#include "Pins.h"
 #include "GaryCooper.h"
 #include "Telemetry.h"
-#include "SlidingBuf.h"
-#include "Comm_Arduino.h"
 #include "sunriset.h"
 #include "SunCalc.h"
 
@@ -47,24 +46,24 @@ double CSunCalc::getSunriseTime(eSunrise_Sunset_T _type)
 {
 	switch(_type)
 	{
-		case srsst_astronomical:
-			return m_sunriseTime_astro;
+	case srsst_astronomical:
+		return m_sunriseTime_astro;
 		break;
 
-		case srsst_nautical:
-			return m_sunriseTime_naut;
+	case srsst_nautical:
+		return m_sunriseTime_naut;
 		break;
 
-		case srsst_civil:
-			return m_sunriseTime_civil;
+	case srsst_civil:
+		return m_sunriseTime_civil;
 		break;
 
-		case srsst_common:
-			return m_sunriseTime_comm;
+	case srsst_common:
+		return m_sunriseTime_comm;
 		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 
 	return CSunCalc_INVALID_TIME;
@@ -74,24 +73,24 @@ double CSunCalc::getSunsetTime(eSunrise_Sunset_T _type)
 {
 	switch(_type)
 	{
-		case srsst_astronomical:
-			return m_sunsetTime_aastro;
+	case srsst_astronomical:
+		return m_sunsetTime_aastro;
 		break;
 
-		case srsst_nautical:
-			return m_sunsetTime_naut;
+	case srsst_nautical:
+		return m_sunsetTime_naut;
 		break;
 
-		case srsst_civil:
-			return m_sunsetTime_civil;
+	case srsst_civil:
+		return m_sunsetTime_civil;
 		break;
 
-		case srsst_common:
-			return m_sunsetTime_comm;
+	case srsst_common:
+		return m_sunsetTime_comm;
 		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 
 	return CSunCalc_INVALID_TIME;
@@ -118,20 +117,20 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	// don't bother with the other stuff because
 	// it will not be set
 #ifdef DEBUG_SUNCALC
-		DEBUGSERIAL.println();
+	DEBUG_SERIAL.println();
 #endif
 
 	if(!_gpsData.m_GPSLocked)
 	{
 #ifdef DEBUG_SUNCALC
-		DEBUGSERIAL.println(PMS("CSunCalc: GPS not locked."));
+		DEBUG_SERIAL.println(PMS("CSunCalc: GPS not locked."));
 #endif
-					telemetrySend(telemetry_tag_error, telemetry_error_GPS_not_locked);
+		telemetrySend(telemetry_tag_error, telemetry_error_GPS_not_locked);
 		return false;
 	}
 
 #ifdef DEBUG_SUNCALC
-	DEBUGSERIAL.println(PMS("CSunCalc: GPS locked."));
+	DEBUG_SERIAL.println(PMS("CSunCalc: GPS locked."));
 #endif
 
 	// Date
@@ -146,18 +145,18 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	double lon = _gpsData.m_position.m_lon;
 
 #ifdef DEBUG_SUNCALC
-	DEBUGSERIAL.print(PMS("Date: "));
-	DEBUGSERIAL.print(month);
-	DEBUGSERIAL.print(PMS("/"));
-	DEBUGSERIAL.print(day);
-	DEBUGSERIAL.print(PMS("/"));
-	DEBUGSERIAL.println(year);
+	DEBUG_SERIAL.print(PMS("Date: "));
+	DEBUG_SERIAL.print(month);
+	DEBUG_SERIAL.print(PMS("/"));
+	DEBUG_SERIAL.print(day);
+	DEBUG_SERIAL.print(PMS("/"));
+	DEBUG_SERIAL.println(year);
 
-	DEBUGSERIAL.print(PMS("Lat: "));
-	DEBUGSERIAL.print(lat);
-	DEBUGSERIAL.print(PMS(" Lon: "));
-	DEBUGSERIAL.println(lon);
-	DEBUGSERIAL.println();
+	DEBUG_SERIAL.print(PMS("Lat: "));
+	DEBUG_SERIAL.print(lat);
+	DEBUG_SERIAL.print(PMS(" Lon: "));
+	DEBUG_SERIAL.println(lon);
+	DEBUG_SERIAL.println();
 #endif
 
 	// Make sure we have good data
@@ -178,30 +177,39 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 						   &m_sunriseTime_astro, &m_sunsetTime_aastro );
 
 	nautical_twilight( year, month, day, lon, lat,
-						   &m_sunriseTime_naut, &m_sunsetTime_naut );
+					   &m_sunriseTime_naut, &m_sunsetTime_naut );
 
 	civil_twilight( year, month, day, lon, lat,
-						   &m_sunriseTime_civil, &m_sunsetTime_civil );
+					&m_sunriseTime_civil, &m_sunsetTime_civil );
 
 	sun_rise_set( year, month, day, lon, lat,
-						   &m_sunriseTime_comm, &m_sunsetTime_comm );
+				  &m_sunriseTime_comm, &m_sunsetTime_comm );
 
 #ifdef DEBUG_SUNCALC
-	DEBUGSERIAL.print(PMS("Current Time (UTC): ")); debugPrintDoubleTime(m_currentTime);
+	DEBUG_SERIAL.print(PMS("Current Time (UTC): "));
+	debugPrintDoubleTime(m_currentTime);
 
-	DEBUGSERIAL.print(PMS("Astronomical (UTC): "));
-	debugPrintDoubleTime(m_sunriseTime_astro, false); DEBUGSERIAL.print(" - "); debugPrintDoubleTime(m_sunsetTime_aastro);
+	DEBUG_SERIAL.print(PMS("Astronomical (UTC): "));
+	debugPrintDoubleTime(m_sunriseTime_astro, false);
+	DEBUG_SERIAL.print(" - ");
+	debugPrintDoubleTime(m_sunsetTime_aastro);
 
 
-	DEBUGSERIAL.print(PMS("Nautical (UTC): "));
-	debugPrintDoubleTime(m_sunriseTime_naut, false); DEBUGSERIAL.print(" - "); debugPrintDoubleTime(m_sunsetTime_naut);
+	DEBUG_SERIAL.print(PMS("Nautical (UTC): "));
+	debugPrintDoubleTime(m_sunriseTime_naut, false);
+	DEBUG_SERIAL.print(" - ");
+	debugPrintDoubleTime(m_sunsetTime_naut);
 
-	DEBUGSERIAL.print(PMS("Civil (UTC): "));
-	debugPrintDoubleTime(m_sunriseTime_civil, false); DEBUGSERIAL.print(" - "); debugPrintDoubleTime(m_sunsetTime_civil);
+	DEBUG_SERIAL.print(PMS("Civil (UTC): "));
+	debugPrintDoubleTime(m_sunriseTime_civil, false);
+	DEBUG_SERIAL.print(" - ");
+	debugPrintDoubleTime(m_sunsetTime_civil);
 
-	DEBUGSERIAL.print(PMS("Common (UTC): "));
-	debugPrintDoubleTime(m_sunriseTime_comm, false); DEBUGSERIAL.print(PMS(" - ")); debugPrintDoubleTime(m_sunsetTime_comm);
-	DEBUGSERIAL.println();
+	DEBUG_SERIAL.print(PMS("Common (UTC): "));
+	debugPrintDoubleTime(m_sunriseTime_comm, false);
+	DEBUG_SERIAL.print(PMS(" - "));
+	debugPrintDoubleTime(m_sunsetTime_comm);
+	DEBUG_SERIAL.println();
 
 #endif
 

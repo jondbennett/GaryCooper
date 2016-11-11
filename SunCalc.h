@@ -52,7 +52,10 @@ public:
 		return false;
 	}
 
-	double getCurrentTime() { return m_currentTime; }
+	double getCurrentTime()
+	{
+		return m_currentTime;
+	}
 
 	double getSunriseTime(eSunrise_Sunset_T _type);
 	double getSunsetTime(eSunrise_Sunset_T _type);

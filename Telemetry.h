@@ -1,4 +1,3 @@
-
 #ifndef Telemetry_h
 #define Telemetry_h
 
@@ -19,12 +18,6 @@ typedef enum
 
 	telemetry_error_door_state,
 } telemetryErrorT;
-
-// Telemetry Serial port and function
-#define TELEMETRY_SERIAL_PORT	Serial2
-#define TELEMETRY_BAUD_RATE		(115200)
-
-void telemetrySetup();
 
 void telemetrySend(telemetryTagE _tag, double _value);
 
