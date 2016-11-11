@@ -110,7 +110,7 @@ void CDoorController::checkTime()
 
 	if(!g_sunCalc.isValidTime(sunset))
 	{
-		DEBUGSERIAL.println(PMS("CDoorController: got invalid sunrise time"));
+		DEBUGSERIAL.println(PMS("CDoorController: got invalid sunset time"));
 		return;
 	}
 
