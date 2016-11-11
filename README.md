@@ -1,9 +1,10 @@
 # GaryCooper
-An Arduino project to automatically open and close a chicken coop door based on
+An [Arduino](https://en.wikipedia.org/wiki/Arduino)
+project to automatically open and close a chicken coop door based on
 sunrise and sunset times.
 
 Basic hardware requirements:  
-Arduino (I used a Mega 2560)  
+Arduino (I used a [Mega 2560](http://www.microcenter.com/product/431995/Arduino_Mega_2560))
 GPS receiver.  
 Relay to control the coop door opener.  
 
@@ -80,8 +81,11 @@ schedule, or to remotely open/close the door or turn the light on and off.
 See the implementation photos here:
 http://jondbennett.com/photo-galleries/52-garycooper-chicken-coop-door-controller
 
-This project depends on my GPSParser, PMS, and SaveController libraries, so
-you'll need to download them as well.
+This project depends on my
+[GPSParser](https://github.com/jondbennett/GPSParser),
+[PMS](https://github.com/jondbennett/PMS), and
+[SaveController](https://github.com/jondbennett/SaveController) libraries,
+so you'll need to download them as well.
 
 The files "sunriset.h" and "sunriset.cpp" were downloaded as-is from the:
 http://www.stjarnhimlen.se/
