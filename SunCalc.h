@@ -64,4 +64,6 @@ public:
 	bool processGPSData(CGPSParserData &_gpsData);
 };
 
+bool timeIsBetween(double _currentTime, double _first, double _second);
+
 #endif

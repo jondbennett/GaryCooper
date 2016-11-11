@@ -196,26 +196,6 @@ void loop()
 	}
 }
 
-
-bool timeIsBetween(double _currentTime, double _first, double _second)
-{
-	if(_first < _second)
-	{
-		if((_currentTime >= _first) && (_currentTime < _second))
-			return true;
-		else
-			return false;
-	}
-	else
-	{
-		if(	((_currentTime >= _first) && (_currentTime < 24.)) ||
-				((_currentTime > 0.) && (_currentTime < _second)) )
-			return true;
-		else
-			return false;
-	}
-}
-
 void debugPrintDoubleTime(double _t, bool _newline)
 {
 	int hour = (int)_t;

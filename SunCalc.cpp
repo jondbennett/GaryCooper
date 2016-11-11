@@ -144,6 +144,7 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	double lat = _gpsData.m_position.m_lat;
 	double lon = _gpsData.m_position.m_lon;
 
+
 #ifdef DEBUG_SUNCALC
 	DEBUG_SERIAL.print(PMS("Date: "));
 	DEBUG_SERIAL.print(month);
@@ -160,14 +161,17 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 #endif
 
 	// Make sure we have good data
-	if(!GPS_IS_VALID_DATA(year)) return false;
-	if(!GPS_IS_VALID_DATA(month)) return false;
-	if(!GPS_IS_VALID_DATA(day)) return false;
-	if(!GPS_IS_VALID_DATA(hour)) return false;
-	if(!GPS_IS_VALID_DATA(minute)) return false;
-	if(!GPS_IS_VALID_DATA(lat)) return false;
-	if(!GPS_IS_VALID_DATA(lon)) return false;
-
+	if(!GPS_IS_VALID_DATA(year) ||
+		!GPS_IS_VALID_DATA(month) ||
+		!GPS_IS_VALID_DATA(day) ||
+		!GPS_IS_VALID_DATA(hour) ||
+		!GPS_IS_VALID_DATA(minute) ||
+		!GPS_IS_VALID_DATA(lat) ||
+		!GPS_IS_VALID_DATA(lon))
+	{
+		telemetrySend(telemetry_tag_error, telemetry_error_GPS_bad_data);
+		return false;
+	}
 
 	// Figure current time
 	m_currentTime = hour + (minute / 60.);
@@ -184,6 +188,10 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 
 	sun_rise_set( year, month, day, lon, lat,
 				  &m_sunriseTime_comm, &m_sunsetTime_comm );
+
+	// Telemetry
+	telemetrySend(telemetry_tag_currentTime, m_currentTime);
+	telemetrySend(telemetry_tag_GPSNSats, _gpsData.m_nSatellites);
 
 #ifdef DEBUG_SUNCALC
 	DEBUG_SERIAL.print(PMS("Current Time (UTC): "));
@@ -214,4 +222,23 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 #endif
 
 	return true;
+}
+
+bool timeIsBetween(double _currentTime, double _first, double _second)
+{
+	if(_first < _second)
+	{
+		if((_currentTime >= _first) && (_currentTime < _second))
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		if(	((_currentTime >= _first) && (_currentTime < 24.)) ||
+				((_currentTime > 0.) && (_currentTime < _second)) )
+			return true;
+		else
+			return false;
+	}
 }

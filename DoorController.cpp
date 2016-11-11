@@ -87,9 +87,9 @@ void CDoorController::tick()
 
 void CDoorController::checkTime()
 {
+	double current = g_sunCalc.getCurrentTime();
 	double sunrise = g_sunCalc.getSunriseTime(m_sunriseType);
 	double sunset = g_sunCalc.getSunsetTime(m_sunsetType);
-	double current = g_sunCalc.getCurrentTime();
 
 #ifdef DEBUG_DOOR_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CDoorController: Door open from "));
@@ -98,6 +98,10 @@ void CDoorController::checkTime()
 	debugPrintDoubleTime(sunset, false);
 	DEBUG_SERIAL.println(PMS(" (UTC)"));
 #endif
+
+	// Update telemetry
+	telemetrySend(telemetry_tag_doorOpenTime, sunrise);
+	telemetrySend(telemetry_tag_doorCloseTime, sunset);
 
 	if(!g_sunCalc.isValidTime(sunrise))
 	{

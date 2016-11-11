@@ -15,6 +15,4 @@
 // Utility functions
 void debugPrintDoubleTime(double _t, bool _newline = true);
 
-bool timeIsBetween(double _currentTime, double _first, double _second);
-
-#endif // COOPBOT_H
+#endif

@@ -139,6 +139,13 @@ void CLightController::checkTime()
 	CLight_Controller_clipTime(eveningLightOnTime);
 	CLight_Controller_clipTime(eveningLightOffTime);
 
+	// Telemetry
+	telemetrySend(telemetry_tag_morningLightOnTime, morningLightOnTime);
+	telemetrySend(telemetry_tag_morningLightOffTime, morningLightOffTime);
+
+	telemetrySend(telemetry_tag_eveningLightOnTime, eveningLightOnTime);
+	telemetrySend(telemetry_tag_eveningLightOffTime, eveningLightOffTime);
+
 #ifdef DEBUG_LIGHT_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CLightController: Chicken day length is "));
 	debugPrintDoubleTime(dayLength);
@@ -190,5 +197,4 @@ void CLightController::setLightOn(bool _on)
 	digitalWrite(PIN_DOOR_RELAY, m_lightIsOn ? HIGH : LOW);
 
 	telemetrySend(telemetry_tag_light_state, (double)m_lightIsOn);
-
 }
