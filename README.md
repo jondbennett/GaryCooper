@@ -28,22 +28,23 @@ installed, software development commenced. The problem is more difficult than
 it first appears.
 
 As it turns out, chickens don't have watches and they don't observe the USA's
-stupid daylight saving time convention. See, they're not as dump as you might
-think. Their wake/sleep cycle depens on the length of the days, and their
-circadian rhythms as influenced by each day's sunrise and sunet time. They wake
-up each morning, even if it is very overcast and the light level is quite low.
-This means that a simple light level sensor will have problems getting in sync
-with the birds. On overcast days it risks letting the birds out late and, even
-worse, locking some birds out of the coop by shutting the door too early in the
-evening. Chickens left outside over night become racoon and weasel food, which
-seriously impacts their ability to produce eggs. So, controlling the door based
-on sunrise and sunset times is a better choice.
+stupid daylight saving time convention. See, they're not as dumb as you might
+think. Their wake/sleep cycle depends on the length of the days, and their
+circadian rhythms as influenced by each day's sunrise and sunset times. They
+wake up each morning, even if it is very overcast and the light level is quite
+low. This means that a simple light level sensor will have problems getting in
+sync with the birds. On overcast days opening and closing the door based on
+outside light risks letting the birds out late and, even worse, locking some
+birds out of the coop by shutting the door too early in the evening. Chickens
+left outside over night become racoon and weasel food, which seriously impacts
+their ability to produce eggs. So, controlling the door based on sunrise and
+sunset times is a better choice.
 
 To make things more complicated, sunrise and sunset times depend on the date
 and the coop's location on Earth. Days are longer during the summer months and
 shorter in the winter. Spring and fall fall somewhere in between. To solve this
 problem, this project uses a GPS receiver to determine both date and location.
-From there, the sunrise and sunet times are calculated and the door is opened
+From there, the sunrise and sunset times are calculated and the door is opened
 and closed based on these times. (It is actually a little more complicated than
 that, but those complications are handled in the code.) All times are handled
 in UTC, so daylight saving time does not complicate the problem.
@@ -54,9 +55,9 @@ additional light in their coop in the morning and evening we can fool their
 bodies into thinking the day is longer. Gary handles that as well.
 
 Basic Operation:
-The Arduino reads the data from the GPS and passes it to the GPS parser. If
-there is valid data, the data is passed to a sunrise/sunset calculator object
-which figures the times based on date and location.
+The Arduino reads the data from the GPS receiver and passes it to the GPS
+parser. If there is valid data, the data is passed to a sunrise/sunset
+calculator object which figures the times based on date and location.
 
 A door controller object monitors the current time relative to the sunrise and
 sunset times and decides when to open and close the door. I call the amount of
@@ -71,7 +72,7 @@ of the day.
 
 Status and error information is transmitted back to the house. The status info
 lets us know when the door opens and closes, and when the light is on. The
-error information is to alert us to gps lock problems, the door being stuck,
+error information is to alert us to GPS lock problems, the door being stuck,
 and such things. I have another repository here - its name is Veronica.
 Veronica is a wxWidgets application that runs in the house. It provides voice
 notification of various coop events and error/warning notifications. It can
@@ -87,5 +88,5 @@ This project depends on my
 [SaveController](https://github.com/jondbennett/SaveController) libraries,
 so you'll need to download them as well.
 
-The files "sunriset.h" and "sunriset.cpp" were downloaded as-is from the:
+The files "sunriset.h" and "sunriset.cpp" were downloaded as-is from:
 http://www.stjarnhimlen.se/
