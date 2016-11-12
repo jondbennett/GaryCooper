@@ -1,38 +1,76 @@
 #ifndef Telemetry_h
 #define Telemetry_h
 
-#define TELEMETRY_VALUE_NULL			(0.)
+// Pure base class for commands received by the telemetry module
+class ITelemetry_CommandTarget
+{
+public:
+	virtual void processCommand(int _tag, double _value) = 0;
+};
 
+
+// State machine states
 typedef enum
 {
-	telemetry_tag_error = -1,
-	telemetry_tag_startup = 0,
+	TParser_S_WaitingForStart = 0,		// Waiting for $
+	TParser_S_ParsingTerms,			// Processing comma-separated terms
+	TParser_S_ProcessingChecksum		// Checking the checksum term
+} TParser_State_T;
 
-	telemetry_tag_GPSNSats,
-	telemetry_tag_lat,
-	telemetry_tag_lon,
-	telemetry_tag_currentTime,
 
-	telemetry_tag_doorOpenTime,
-	telemetry_tag_doorCloseTime,
-	telemetry_tag_door_state,
+// Largest distance between commas and such
+#define TParser_TERMSIZE		(16)
+#define TParser_INVALID_CMD		(-1)
 
-	telemetry_tag_morningLightOnTime,
-	telemetry_tag_morningLightOffTime,
-	telemetry_tag_eveningLightOnTime,
-	telemetry_tag_eveningLightOffTime,
-	telemetry_tag_light_state,
-} telemetryTagE;
-
-typedef enum
+// The telemetry module
+class CTelemetry
 {
-	telemetry_error_GPS_no_data = 0,
-	telemetry_error_GPS_not_locked,
-	telemetry_error_GPS_bad_data,
+protected:
 
-	telemetry_error_door_state,
-} telemetryErrorT;
+	// Stuff for processing commands from the house
+	ICommunicationInterface *m_commInterface;
+	ITelemetry_CommandTarget *m_commandTarget;
 
-void telemetrySend(telemetryTagE _tag, double _value);
+	// Current state machine state
+	TParser_State_T m_state;
+
+	// Location to accumulate data as the parse
+	// progresses. Mostly for the stuff between
+	// commas
+	char m_term[TParser_TERMSIZE];
+	int m_termOffset;
+	int m_termNumber;
+
+	// Running checksum
+	unsigned char m_checksum;
+
+	// The actual command (from process term)
+	int m_cmdTag;
+	double m_cmdValue;
+
+	// Parser processing
+	void parseChar(unsigned char _c);
+	void AddTermChar(unsigned char _c);
+
+	void processTerm();		// Returns true when valid and recognized sentence is complete
+	unsigned char from_hex(unsigned char _a);
+
+	void reset();
+
+	// Returns true if any sentences were processed (data may have changed)
+	void parse(const unsigned char _buf[], unsigned int _bufLen);
+
+public:
+
+	CTelemetry();
+	virtual ~CTelemetry();
+
+	void setInterfaces(ICommunicationInterface *_commInterface,
+				ITelemetry_CommandTarget *_cmdTarget);
+
+	void tick();
+
+	void send(int _tag, double _value);
+};
 
 #endif

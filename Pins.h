@@ -6,7 +6,7 @@
 #define PINS_H
 
 // Onboard LED
-#define PIN_DOOR_STATE_LED	(13)
+#define PIN_DOOR_STATE_LED	(LED_BUILTIN)
 
 // Audio Beeper
 #define PIN_BEEPER			(45)
@@ -20,11 +20,11 @@
 #define DEBUG_BAUD_RATE	(9600)
 
 // GPS serial port
-#define GPS_SERIAL  Serial1
-#define GPS_BAUD_RATE (9600)
+#define GPS_SERIAL  	Serial1
+#define GPS_BAUD_RATE 	(9600)
 
 // Telemetry serial port
-#define TELEMETRY_SERIAL	Serial2
+#define TELEMETRY_PORT			(2)
 #define TELEMETRY_BAUD_RATE		(115200)
 
 

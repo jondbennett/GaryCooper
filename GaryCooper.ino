@@ -1,3 +1,6 @@
+////////////////////////////////////////////////////
+// Gary Cooper chicken coop controller
+////////////////////////////////////////////////////
 #include <Arduino.h>
 #include <EEPROM.h>
 
@@ -5,10 +8,16 @@
 #include <GPSParser.h>
 #include <SaveController.h>
 
+#include "ICommInterface.h"
+#include "Telemetry.h"
+#include "TelemetryTags.h"
+#include "SlidingBuf.h"
+#include "Comm_Arduino.h"
+
 #include "GaryCooper.h"
 #include "Pins.h"
 #include "SunCalc.h"
-#include "Telemetry.h"
+#include "Command.h"
 #include "BeepController.h"
 #include "DoorController.h"
 #include "LightController.h"
@@ -22,7 +31,6 @@ CDoorController g_doorController;
 // Light controller
 CLightController g_lightController;
 
-
 // Beep controller
 CBeepController g_beepController(PIN_BEEPER);
 
@@ -32,6 +40,11 @@ bool settingsLoaded = false;
 
 // Sunrise / Sunset calculator
 CSunCalc g_sunCalc;
+
+// Telemetry module
+CComm_Arduino g_telemetryComm;
+CTelemetry g_telemetry;
+CCommand g_commandProcessor;
 
 #define MILLIS_PER_SECOND   (1000L)
 #define SECONDS_BETWEEN_UPDATES	(60L)
@@ -98,7 +111,8 @@ void setup()
 	GPS_SERIAL.begin(GPS_BAUD_RATE);
 
 	// Prep the telemetry port
-	TELEMETRY_SERIAL.begin(TELEMETRY_BAUD_RATE);
+	g_telemetryComm.open(TELEMETRY_PORT, TELEMETRY_BAUD_RATE);
+	g_telemetry.setInterfaces(&g_telemetryComm, &g_commandProcessor);
 
 	// Setup the door controller
 	g_doorController.setup();
@@ -127,6 +141,14 @@ void loop()
 		loadSettings();
 		settingsLoaded = true;
 	}
+
+	// Let the telemetry module process serial data
+	do
+	{
+		g_telemetryComm.tick();
+		g_telemetry.tick();
+	}
+	while(g_telemetryComm.wantsTick());
 
 	// Let the door controller time its relay
 	g_doorController.tick();
@@ -164,13 +186,9 @@ void loop()
 		// Prep for next update
 		g_timer = millis() + (MILLIS_PER_SECOND * SECONDS_BETWEEN_UPDATES);
 
-		// Send startup notice
-		static bool s_startupTelemetrySent = false;
-		if(!s_startupTelemetrySent)
-		{
-			s_startupTelemetrySent = true;
-			telemetrySend(telemetry_tag_startup, TELEMETRY_VALUE_NULL);
-		}
+		// Send telemetry version number
+		g_telemetry.send(telemetry_tag_version, TELEMETRY_VERSION);
+
 
 		// If the GPS is not sending any data then report an error
 		if(!s_gpsDataStreamActive)
@@ -179,7 +197,7 @@ void loop()
 
 			g_GPSParser.getGPSData().clear();
 			g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, 1);
-			telemetrySend(telemetry_tag_error, telemetry_error_GPS_no_data);
+			g_telemetry.send(telemetry_tag_error, telemetry_error_GPS_no_data);
 		}
 		s_gpsDataStreamActive = false;
 

@@ -6,11 +6,16 @@
 #include <PMS.h>
 #include <GPSParser.h>
 
+#include "ICommInterface.h"
+#include "Telemetry.h"
+#include "TelemetryTags.h"
+
 #include "Pins.h"
 #include "GaryCooper.h"
-#include "Telemetry.h"
 #include "sunriset.h"
 #include "SunCalc.h"
+
+extern CTelemetry g_telemetry;
 
 ////////////////////////////////////////////////////////////
 // Use GPS data to calculate sunrise, sunset, and current times.
@@ -120,12 +125,16 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	DEBUG_SERIAL.println();
 #endif
 
-	if(!_gpsData.m_GPSLocked)
+	if(_gpsData.m_GPSLocked)
+	{
+		g_telemetry.send(telemetry_tag_GPSLockStatus, 1.);
+	}
+	else
 	{
 #ifdef DEBUG_SUNCALC
 		DEBUG_SERIAL.println(PMS("CSunCalc: GPS not locked."));
 #endif
-		telemetrySend(telemetry_tag_error, telemetry_error_GPS_not_locked);
+		g_telemetry.send(telemetry_tag_GPSLockStatus, 0.);
 		return false;
 	}
 
@@ -169,7 +178,7 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 		!GPS_IS_VALID_DATA(lat) ||
 		!GPS_IS_VALID_DATA(lon))
 	{
-		telemetrySend(telemetry_tag_error, telemetry_error_GPS_bad_data);
+		g_telemetry.send(telemetry_tag_error, telemetry_error_GPS_bad_data);
 		return false;
 	}
 
@@ -190,11 +199,14 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 				  &m_sunriseTime_comm, &m_sunsetTime_comm );
 
 	// Telemetry
-	telemetrySend(telemetry_tag_GPSNSats, _gpsData.m_nSatellites);
-	telemetrySend(telemetry_tag_lat, lat);
-	telemetrySend(telemetry_tag_lon, lon);
+	g_telemetry.send(telemetry_tag_GPSNSats, _gpsData.m_nSatellites);
+	g_telemetry.send(telemetry_tag_lat, lat);
+	g_telemetry.send(telemetry_tag_lon, lon);
 
-	telemetrySend(telemetry_tag_currentTime, m_currentTime);
+	g_telemetry.send(telemetry_tag_year, year);
+	g_telemetry.send(telemetry_tag_month, month);
+	g_telemetry.send(telemetry_tag_day, day);
+	g_telemetry.send(telemetry_tag_currentTime, m_currentTime);
 
 #ifdef DEBUG_SUNCALC
 	DEBUG_SERIAL.print(PMS("Current Time (UTC): "));

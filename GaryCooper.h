@@ -1,10 +1,17 @@
+////////////////////////////////////////////////////
+// Configuration file for the program
+////////////////////////////////////////////////////
 #ifndef GaryCooper_h
 #define GaryCooper_h
+
+////////////////////////////////////
+
 
 //#define	DEBUG_RAW_GPS
 #define DEBUG_SUNCALC
 #define	DEBUG_DOOR_CONTROLLER
 #define DEBUG_LIGHT_CONTROLLER
+#define DEBUG_COMMAND_PROCESSOR
 
 // Beep on door change?
 #define COOPDOOR_CHANGE_BEEPER
@@ -14,5 +21,6 @@
 
 // Utility functions
 void debugPrintDoubleTime(double _t, bool _newline = true);
+
 
 #endif

@@ -7,15 +7,19 @@
 #include <GPSParser.h>
 #include <SaveController.h>
 
+#include "ICommInterface.h"
+#include "TelemetryTags.h"
+#include "Telemetry.h"
+
 #include "GaryCooper.h"
 #include "Pins.h"
 #include "SunCalc.h"
-#include "Telemetry.h"
 #include "BeepController.h"
 #include "DoorController.h"
 
 extern CBeepController g_beepController;
 extern CSunCalc g_sunCalc;
+extern CTelemetry g_telemetry;
 
 ////////////////////////////////////////////////////////////
 // Use GPS to decide when to open and close the coop door
@@ -100,8 +104,8 @@ void CDoorController::checkTime()
 #endif
 
 	// Update telemetry
-	telemetrySend(telemetry_tag_doorOpenTime, sunrise);
-	telemetrySend(telemetry_tag_doorCloseTime, sunset);
+	g_telemetry.send(telemetry_tag_doorOpenTime, sunrise);
+	g_telemetry.send(telemetry_tag_doorCloseTime, sunset);
 
 	if(!g_sunCalc.isValidTime(sunrise))
 	{
@@ -128,7 +132,7 @@ void CDoorController::checkTime()
 	}
 
 	// Send current door state to the telemetry port
-	telemetrySend(telemetry_tag_door_state, (double)m_doorOpen);
+	g_telemetry.send(telemetry_tag_door_state, (double)m_doorOpen);
 
 #ifdef DEBUG_DOOR_CONTROLLER
 	if(doorShouldBeOpen)

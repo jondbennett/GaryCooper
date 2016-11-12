@@ -29,18 +29,22 @@ public:
 	{
 		return m_sunriseType;
 	}
+
 	void setSunriseType(eSunrise_Sunset_T _sunriseType)
 	{
-		m_sunriseType = _sunriseType;
+		if(_sunriseType >= srsst_astronomical && _sunriseType <= srsst_common)
+			m_sunriseType = _sunriseType;
 	}
 
 	eSunrise_Sunset_T getSunsetType()
 	{
 		return m_sunsetType;
 	}
+
 	void setSunsetType(eSunrise_Sunset_T _sunsetType)
 	{
-		m_sunsetType = _sunsetType;
+		if(_sunsetType >= srsst_astronomical && _sunsetType <= srsst_common)
+			m_sunsetType = _sunsetType;
 	}
 
 	void saveSettings(CSaveController &_saveController);

@@ -43,20 +43,23 @@ public:
 	{
 		return m_minimumDayLength;
 	}
+
 	void setMinimumDayLength(double _dayLen)
 	{
-		m_minimumDayLength = _dayLen;
+		if(_dayLen >= 0. && _dayLen < 16.)
+			m_minimumDayLength = _dayLen;
 	}
 
 	double getExtraLightTime()
 	{
 		return m_extraLightTime;
 	}
+
 	void setExtraLightTime(double _elt)
 	{
-		m_extraLightTime = _elt;
+		if(_elt >= 0. && _elt < 4.)
+			m_extraLightTime = _elt;
 	}
-
 
 	void saveSettings(CSaveController &_saveController);
 	void loadSettings(CSaveController &_saveController);
