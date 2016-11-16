@@ -1,4 +1,3 @@
-
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -20,7 +19,7 @@ CTelemetry::~CTelemetry()
 }
 
 void CTelemetry::setInterfaces(ICommunicationInterface *_commInterface,
-				ITelemetry_ReceiveTarget *_receiveTarget)
+							   ITelemetry_ReceiveTarget *_receiveTarget)
 {
 	m_commInterface = _commInterface;
 	m_receiveTarget = _receiveTarget;
@@ -64,7 +63,7 @@ void CTelemetry::sendTerm(const char *_value)
 	char termBuf[CTelemetry_TERMSIZE * 2];
 	termBuf[0] = '\0';
 	if(m_transmitTermNumber)
-		strcpy(termBuf,",");
+		strcpy(termBuf, ",");
 	strncat(termBuf, _value, sizeof(termBuf));
 
 	// Calculate the checksum
@@ -88,7 +87,7 @@ void CTelemetry::sendTerm(int _value)
 
 void CTelemetry::sendTerm(bool _value)
 {
-	sendTerm((_value)?1:0);
+	sendTerm((_value) ? 1 : 0);
 }
 
 void CTelemetry::sendTerm(double _value)
@@ -144,7 +143,7 @@ void CTelemetry::parseChar(unsigned char _c)
 
 	// Extremely special case for very (I mean VERY) noisy data streams)
 	if((m_state != TParser_S_WaitingForStart) &&
-		(_c == '$'))
+			(_c == '$'))
 	{
 		// We have received a '$' when we were not expecting one, so the data must be a mess.
 		// We'll just reset the parser and continue as though this '$' is the start of the
@@ -156,88 +155,88 @@ void CTelemetry::parseChar(unsigned char _c)
 	// state we are in.
 	switch(m_state)
 	{
-		// Waiting for $
-		case TParser_S_WaitingForStart:
-			if(_c == '$')
-			{
-				// Prep for parsing terms
-				reset();
+	// Waiting for $
+	case TParser_S_WaitingForStart:
+		if(_c == '$')
+		{
+			// Prep for parsing terms
+			reset();
 
-				// Change state to term processing
-				m_state = TParser_S_ParsingTerms;
+			// Change state to term processing
+			m_state = TParser_S_ParsingTerms;
 
-				// Let command target know that we are starting
-				if(m_receiveTarget)
-					m_receiveTarget->startReception();
-			}
+			// Let command target know that we are starting
+			if(m_receiveTarget)
+				m_receiveTarget->startReception();
+		}
+		break;
+
+	// Processing comma-separated terms
+	case TParser_S_ParsingTerms:
+		switch(_c)
+		{
+		// Comma and asterisk both end the current term, so we do some
+		// common processing to reduce code size. However, asterisk causes
+		// a state change
+		case ',':
+			// Process this term
+			m_receiveChecksum ^= _c;
+			// Fall through
+
+		case '*':
+			processTerm();
+
+			// And start the next
+			m_receiveTermOffset = 0;
+			m_receiveTerm[m_receiveTermOffset] = '\0';
+			m_receiveTermNumber++;
+
+			// Star also ends the current term, and it changes state to checksum processing
+			if(_c == '*')
+				m_state = TParser_S_ProcessingChecksum;
 			break;
 
-		// Processing comma-separated terms
-		case TParser_S_ParsingTerms:
-			switch(_c)
-			{
-				// Comma and asterisk both end the current term, so we do some
-				// common processing to reduce code size. However, asterisk causes
-				// a state change
-				case ',':
-					// Process this term
-					m_receiveChecksum ^= _c;
-					// Fall through
-
-				case '*':
-					processTerm();
-
-					// And start the next
-					m_receiveTermOffset = 0;
-					m_receiveTerm[m_receiveTermOffset] = '\0';
-					m_receiveTermNumber++;
-
-					// Star also ends the current term, and it changes state to checksum processing
-					if(_c == '*')
-						m_state = TParser_S_ProcessingChecksum;
-					break;
-
-				default:
-					m_receiveChecksum ^= _c;
-					addReceiveTermChar(_c);
-					break;
-			}
-			break;
-
-		// Checking the checksum term
-		case TParser_S_ProcessingChecksum:
-			if(_c == '\r')	// This ends the current string so do EOL processing
-			{
-				// First, verify the checksum
-				if(m_receiveTermOffset == 2)
-				{
-					// Check the sentence checksum against ours
-					unsigned char checksum = 16 * from_hex(m_receiveTerm[0]) + from_hex(m_receiveTerm[1]);
-					if(m_receiveTarget)
-					{
-						if(checksum == m_receiveChecksum)
-							m_receiveTarget->receiveChecksumCorrect();
-						else
-							m_receiveTarget->receiveChecksumError();
-					}
-				}
-
-				// reset the parser
-				reset();
-
-				// And start looking for the next one
-				m_state = TParser_S_WaitingForStart;
-			}
-			else
-			{
-				// Not the end of the string, so keep processing characters
-				addReceiveTermChar(_c);
-			}
-			break;
-
-		// Invalid state... we should never get here
 		default:
+			m_receiveChecksum ^= _c;
+			addReceiveTermChar(_c);
 			break;
+		}
+		break;
+
+	// Checking the checksum term
+	case TParser_S_ProcessingChecksum:
+		if(_c == '\r')	// This ends the current string so do EOL processing
+		{
+			// First, verify the checksum
+			if(m_receiveTermOffset == 2)
+			{
+				// Check the sentence checksum against ours
+				unsigned char checksum = 16 * from_hex(m_receiveTerm[0]) + from_hex(m_receiveTerm[1]);
+				if(m_receiveTarget)
+				{
+					if(checksum == m_receiveChecksum)
+						m_receiveTarget->receiveChecksumCorrect();
+					else
+						m_receiveTarget->receiveChecksumError();
+				}
+			}
+
+			// reset the parser
+			reset();
+
+			// And start looking for the next one
+			m_state = TParser_S_WaitingForStart;
+		}
+		else
+		{
+			// Not the end of the string, so keep processing characters
+			addReceiveTermChar(_c);
+		}
+		break;
+
+	// Invalid state... we should never get here
+	default:
+		break;
 	}
 
 #ifdef CTelemetry_DEBUG
@@ -281,12 +280,12 @@ void CTelemetry::reset()
 
 unsigned char CTelemetry::from_hex(unsigned char _a)
 {
-  if (_a >= 'A' && _a <= 'F')
-    return _a - 'A' + 10;
-  else if (_a >= 'a' && _a <= 'f')
-    return _a - 'a' + 10;
-  else
-    return _a - '0';
+	if (_a >= 'A' && _a <= 'F')
+		return _a - 'A' + 10;
+	else if (_a >= 'a' && _a <= 'f')
+		return _a - 'a' + 10;
+	else
+		return _a - '0';
 }
 
 
@@ -298,7 +297,7 @@ unsigned char CTelemetry::from_hex(unsigned char _a)
 static char *Telemetry_DtoA(char *str, double num, int places)
 {
 
-	double precision = (1.0)/(pow(10, (double)(places + 1)));
+	double precision = (1.0) / (pow(10, (double)(places + 1)));
 
 	// handle special cases
 	if (isnan(num))
@@ -383,7 +382,7 @@ static char *Telemetry_DtoA(char *str, double num, int places)
 				m++;
 			}
 			c -= m;
-			for (i = 0, j = m-1; i<j; i++, j--)
+			for (i = 0, j = m - 1; i < j; i++, j--)
 			{
 				// swap without temporary
 				c[i] ^= c[j];
@@ -402,66 +401,66 @@ static char *Telemetry_DtoA(char *str, double num, int places)
 template<class T> inline
 void swap(T &first, T &second)
 {
-    if (&first != &second)
-    {
-        T tmp = first;
-        first = second;
-        second = tmp;
-    }
+	if (&first != &second)
+	{
+		T tmp = first;
+		first = second;
+		second = tmp;
+	}
 }
 
 /* A utility function to reverse a string  */
 static void Telemetry_Reverse(char str[], int length)
 {
-    int start = 0;
-    int end = length -1;
-    while (start < end)
-    {
-        swap(*(str+start), *(str+end));
-        start++;
-        end--;
-    }
+	int start = 0;
+	int end = length - 1;
+	while (start < end)
+	{
+		swap(*(str + start), *(str + end));
+		start++;
+		end--;
+	}
 }
 
 // Implementation of itoa()
 static char* Telemetry_ItoA(int num, char* str, int base)
 {
-    int i = 0;
-    bool isNegative = false;
+	int i = 0;
+	bool isNegative = false;
 
-    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-    if (num == 0)
-    {
-        str[i++] = '0';
-        str[i] = '\0';
-        return str;
-    }
+	/* Handle 0 explicitely, otherwise empty string is printed for 0 */
+	if (num == 0)
+	{
+		str[i++] = '0';
+		str[i] = '\0';
+		return str;
+	}
 
-    // In standard itoa(), negative numbers are handled only with
-    // base 10. Otherwise numbers are considered unsigned.
-    if (num < 0 && base == 10)
-    {
-        isNegative = true;
-        num = -num;
-    }
+	// In standard itoa(), negative numbers are handled only with
+	// base 10. Otherwise numbers are considered unsigned.
+	if (num < 0 && base == 10)
+	{
+		isNegative = true;
+		num = -num;
+	}
 
-    // Process individual digits
-    while (num != 0)
-    {
-        int rem = num % base;
-        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-        num = num/base;
-    }
+	// Process individual digits
+	while (num != 0)
+	{
+		int rem = num % base;
+		str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+		num = num / base;
+	}
 
-    // If number is negative, append '-'
-    if (isNegative)
-        str[i++] = '-';
+	// If number is negative, append '-'
+	if (isNegative)
+		str[i++] = '-';
 
-    str[i] = '\0'; // Append string terminator
+	str[i] = '\0'; // Append string terminator
 
-    // Reverse the string
-    Telemetry_Reverse(str, i);
+	// Reverse the string
+	Telemetry_Reverse(str, i);
 
-    return str;
+	return str;
 }
 

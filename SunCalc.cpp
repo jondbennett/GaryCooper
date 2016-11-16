@@ -188,12 +188,12 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 
 	// Make sure we have good data
 	if(!GPS_IS_VALID_DATA(year) ||
-		!GPS_IS_VALID_DATA(month) ||
-		!GPS_IS_VALID_DATA(day) ||
-		!GPS_IS_VALID_DATA(hour) ||
-		!GPS_IS_VALID_DATA(minute) ||
-		!GPS_IS_VALID_DATA(lat) ||
-		!GPS_IS_VALID_DATA(lon))
+			!GPS_IS_VALID_DATA(month) ||
+			!GPS_IS_VALID_DATA(day) ||
+			!GPS_IS_VALID_DATA(hour) ||
+			!GPS_IS_VALID_DATA(minute) ||
+			!GPS_IS_VALID_DATA(lat) ||
+			!GPS_IS_VALID_DATA(lon))
 	{
 		reportError(telemetry_error_GPS_bad_data);
 		return false;

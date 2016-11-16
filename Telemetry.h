@@ -47,6 +47,7 @@ protected:
 	unsigned char m_receiveChecksum;
 
 	// Parser processing
+	void parse(const unsigned char _buf[], unsigned int _bufLen);
 	void parseChar(unsigned char _c);
 	void addReceiveTermChar(unsigned char _c);
 
@@ -68,8 +69,6 @@ public:
 	void setInterfaces(ICommunicationInterface *_commInterface,
 					   ITelemetry_ReceiveTarget *_receiveTarget);
 
-	// Returns true if any sentences were processed (data may have changed)
-	void parse(const unsigned char _buf[], unsigned int _bufLen);
 
 	void tick();
 

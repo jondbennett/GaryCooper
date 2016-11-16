@@ -24,6 +24,8 @@ typedef enum
 
 	telemetry_tag_light_info,	// Morning on / off times , evening on / off times,, state - 0 = off, 1 = on
 
+	telemetry_tag_command_ack = 50,	// Send to ack a command (value is command tag)
+
 } telemetryTagE;
 
 // Error types sent FROM the coop controller:

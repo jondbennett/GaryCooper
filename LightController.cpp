@@ -175,7 +175,7 @@ void CLightController::checkTime()
 	DEBUG_SERIAL.print(PMS("CLightController - chicken mid day (UTC): "));
 	debugPrintDoubleTime(midDay);
 
-	DEBUG_SERIAL.print(PMS("CLightController - morning light (UTC): "));
+	DEBUG_SERIAL.print(PMS("CLightController - morning light on (UTC): "));
 	debugPrintDoubleTime(morningLightOnTime, false);
 
 	DEBUG_SERIAL.print(PMS(" - "));

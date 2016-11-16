@@ -62,7 +62,7 @@ void CDoorMotor_GarrageDoor::setDesiredDoorState(doorController_doorStateE _door
 	DEBUG_SERIAL.println((_doorState == doorController_doorOpen) ? PMS("open.") :
 						 (_doorState == doorController_doorClosed) ? PMS("closed.") :
 						 (_doorState == doorController_doorStateUnknown) ? PMS("UNKNOWN.") :
-						 	PMS("*** INVALID ***"));
+						 PMS("*** INVALID ***"));
 #endif
 
 	if(_doorState != doorController_doorStateUnknown && getDoorState() != _doorState)
@@ -75,7 +75,7 @@ void CDoorMotor_GarrageDoor::setDesiredDoorState(doorController_doorStateE _door
 		digitalWrite(PIN_DOOR_RELAY, HIGH);
 
 #ifdef DEBUG_DOOR_MOTOR
-	DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - cycling relay."));
+		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - cycling relay."));
 #endif
 
 	}

@@ -115,7 +115,7 @@ unsigned int CSlidingBuffer::write(const unsigned char *_pBuf, unsigned int _iBu
 
 	// Now see how much I can add
 	freeSpace = m_iBufLen - m_iDataLen;
-	lenToAdd = (freeSpace < _iBufSize)?freeSpace : _iBufSize;
+	lenToAdd = (freeSpace < _iBufSize) ? freeSpace : _iBufSize;
 
 	if(lenToAdd == 0)
 		lenToAdd = 0;
@@ -153,7 +153,7 @@ int CSlidingBuffer::gets(char *_pBuf, int _iBufLen)
 
 	// Check for eol
 
-	eol = (unsigned char *)strstr(( char *)buf,"\n");
+	eol = (unsigned char *)strstr(( char *)buf, "\n");
 
 	if(eol == 0)
 	{
@@ -228,7 +228,7 @@ int CSlidingBuffer::gets(char *_pBuf, int _iBufLen)
 		return -1;
 
 	// Copy the data
-	strcpy(_pBuf,(char *)start);
+	strcpy(_pBuf, (char *)start);
 
 	// Remove the requested data from
 	// my buffer

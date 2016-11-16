@@ -130,6 +130,7 @@ void CDoorController::checkTime()
 		DEBUG_SERIAL.println(PMS("CDoorController - door motor in unknown state."));
 #endif
 		reportError(telemetry_error_door_motor_unknown_state);
+		return;
 	}
 
 	double current = g_sunCalc.getCurrentTime();
@@ -195,10 +196,10 @@ void CDoorController::checkTime()
 
 		m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
 #ifdef DEBUG_DOOR_CONTROLLER
-	if(m_correctState)
-		DEBUG_SERIAL.println(PMS("CDoorController - opening coop door."));
-	else
-		DEBUG_SERIAL.println(PMS("CDoorController - closing coop door."));
+		if(m_correctState)
+			DEBUG_SERIAL.println(PMS("CDoorController - opening coop door."));
+		else
+			DEBUG_SERIAL.println(PMS("CDoorController - closing coop door."));
 #endif
 	}
 
@@ -214,7 +215,7 @@ void CDoorController::checkTime()
 	DEBUG_SERIAL.println((doorState == doorController_doorOpen) ? PMS("open.") :
 						 (doorState == doorController_doorClosed) ? PMS("closed.") :
 						 (doorState == doorController_doorStateUnknown) ? PMS("UNKNOWN.") :
-						 	PMS("*** INVALID ***"));
+						 PMS("*** INVALID ***"));
 	DEBUG_SERIAL.println();
 #endif
 }
