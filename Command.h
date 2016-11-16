@@ -11,6 +11,8 @@ protected:
 	double m_term1;
 
 	void processCommand(int _tag, double _value);
+	void ackCommand(int _tag);
+
 	void processCommand_V1(int _tag, double _value);
 
 public:

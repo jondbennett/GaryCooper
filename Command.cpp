@@ -89,7 +89,11 @@ void CCommand::processCommand(int _tag, double _value)
 #endif
 
 		// Only accept valid versions instead of blind assignment
-		if(_value == 1.) m_version = 1;
+		if(_value == 1.)
+		{
+			m_version = 1;
+			ackCommand(_tag);
+		}
 	}
 	else
 	{
@@ -106,6 +110,14 @@ void CCommand::processCommand(int _tag, double _value)
 		// Only process after we have a valid version
 		if(m_version == TELEMETRY_VERSION_01) processCommand_V1(_tag, _value);
 	}
+}
+
+void CCommand::ackCommand(int _tag)
+{
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_command_ack);
+	g_telemetry.sendTerm(_tag);
+	g_telemetry.transmissionEnd();
 }
 
 void CCommand::processCommand_V1(int _tag, double _value)
@@ -129,9 +141,16 @@ void CCommand::processCommand_V1(int _tag, double _value)
 							);
 #endif
 		if(sunriseType >= srsst_astronomical && sunriseType <= srsst_common)
+		{
 			g_doorController.setSunriseType(sunriseType);
-		saveSettings();
-		loadSettings();
+			saveSettings();
+			loadSettings();
+			ackCommand(_tag);
+		}
+		else
+		{
+			reportError(telemetry_error_received_invalid_command_value);
+		}
 		break;
 
 	case telemetry_command_setSunsetType:
@@ -145,9 +164,16 @@ void CCommand::processCommand_V1(int _tag, double _value)
 							);
 #endif
 		if(sunsetType >= srsst_astronomical && sunsetType <= srsst_common)
+		{
 			g_doorController.setSunsetType(sunsetType);
-		saveSettings();
-		loadSettings();
+			saveSettings();
+			loadSettings();
+			ackCommand(_tag);
+		}
+		else
+		{
+			reportError(telemetry_error_received_invalid_command_value);
+		}
 		break;
 
 	case telemetry_command_setMinimumDayLength:
@@ -158,6 +184,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		g_lightController.setMinimumDayLength(_value);
 		saveSettings();
 		loadSettings();
+		ackCommand(_tag);
 		break;
 
 	case telemetry_command_setExtraIllumination:
@@ -168,6 +195,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		g_lightController.setExtraLightTime(_value);
 		saveSettings();
 		loadSettings();
+		ackCommand(_tag);
 		break;
 
 	case telemetry_command_forceDoor:
@@ -180,23 +208,26 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 #ifdef DEBUG_COMMAND_PROCESSOR
 		DEBUG_SERIAL.print(PMS("CCommand - force door: "));
-		DEBUG_SERIAL.println((doorState == doorController_doorOpen) ? PMS("Open") : PMS("Closed"));
+		DEBUG_SERIAL.println((doorState == doorController_doorOpen) ? PMS("Open.") : PMS("Closed."));
 #endif
 		if(getDoorMotor())
 			getDoorMotor()->setDesiredDoorState(doorState);
+		ackCommand(_tag);
 		break;
 
 	case telemetry_command_forceLight:
 #ifdef DEBUG_COMMAND_PROCESSOR
 		DEBUG_SERIAL.print(PMS("CCommand - force light: "));
-		DEBUG_SERIAL.println((lightOn) ? PMS("On") : PMS("Off"));
+		DEBUG_SERIAL.println((lightOn) ? PMS("On.") : PMS("Off."));
 #endif
 		g_lightController.setLightOn(lightOn);
+		ackCommand(_tag);
 		break;
 
 	case telemetry_command_loadDefaults:
 		g_saveController.updateHeader(0xfe);
 		loadSettings();
+		ackCommand(_tag);
 		break;
 	default:
 #ifdef DEBUG_COMMAND_PROCESSOR

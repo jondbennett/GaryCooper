@@ -55,8 +55,6 @@ protected:
 
 	void reset();
 
-	// Returns true if any sentences were processed (data may have changed)
-	void parse(const unsigned char _buf[], unsigned int _bufLen);
 
 	// Members for sending data
 	int m_transmitTermNumber;
@@ -68,7 +66,10 @@ public:
 	virtual ~CTelemetry();
 
 	void setInterfaces(ICommunicationInterface *_commInterface,
-				ITelemetry_ReceiveTarget *_receiveTarget);
+					   ITelemetry_ReceiveTarget *_receiveTarget);
+
+	// Returns true if any sentences were processed (data may have changed)
+	void parse(const unsigned char _buf[], unsigned int _bufLen);
 
 	void tick();
 

@@ -20,7 +20,7 @@ $103,13*1C - Thirteen hours
 
 Set extra illumination time
 $104,0*29 - None
-$104,0.249*38 - 15 minutes
+$104,0.25*00 - 15 minutes
 $104,0.5*32 - 30 minutes
 
 Force door
