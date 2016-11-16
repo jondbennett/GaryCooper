@@ -1,0 +1,38 @@
+Set protocol version
+$100,1*2C
+
+Set sunrise type
+$101,0*2C - Astronomical
+$101,1*2D - Nautical
+$101,2*2E - Civil
+$101,3*2F - Common
+
+Set sunset type
+$102,0*2F - Astronomica
+$102,1*2E - Nautical
+$102,2*2D - Civil
+$102,3*2C - Common
+
+Set minimum day length
+$103,0*2E - No supplemental lighting
+$103,12*1D - Twelve hours
+$103,13*1C - Thirteen hours
+
+Set extra illumination time
+$104,0*29 - None
+$104,0.249*38 - 15 minutes
+$104,0.5*32 - 30 minutes
+
+Force door
+$105,0*28 - Closed
+$105,1*29 - Open
+
+Force light
+$106,0*2B - Off
+$106,1*2A - On
+
+Reset system to defaults
+$107,0*2A
+
+
+

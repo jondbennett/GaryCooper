@@ -11,45 +11,45 @@
 #include "TelemetryTags.h"
 #include "Telemetry.h"
 
-#include "GaryCooper.h"
 #include "Pins.h"
 #include "SunCalc.h"
-#include "BeepController.h"
 #include "DoorController.h"
-
-extern CBeepController g_beepController;
-extern CSunCalc g_sunCalc;
-extern CTelemetry g_telemetry;
+#include "LightController.h"
+#include "BeepController.h"
+#include "GaryCooper.h"
 
 ////////////////////////////////////////////////////////////
 // Use GPS to decide when to open and close the coop door
 ////////////////////////////////////////////////////////////
 CDoorController::CDoorController()
 {
-	m_doorOpen = false;
+	m_correctState = doorController_doorStateUnknown;
 
 	m_sunriseType = srsst_nautical;
 	m_sunsetType = srsst_civil;
 
-	m_relayms = 0;
+	m_stuckDoorMS = 0;
 }
 
 CDoorController::~CDoorController()
 {
-
 }
 
 void CDoorController::setup()
 {
-	// Setup door indicator
-	pinMode(PIN_DOOR_STATE_LED, OUTPUT);
-
-	// Setup the door relay
-	pinMode(PIN_DOOR_RELAY, OUTPUT);
+	if(getDoorMotor())
+		getDoorMotor()->setup();
 }
 
-void CDoorController::saveSettings(CSaveController &_saveController)
+void CDoorController::saveSettings(CSaveController &_saveController, bool _defaults)
 {
+	// Should I setup for default settings?
+	if(_defaults)
+	{
+		setSunriseType(srsst_nautical);
+		setSunsetType(srsst_civil);
+	}
+
 	// Save settings
 	_saveController.writeInt(getSunriseType());
 	_saveController.writeInt(getSunsetType());
@@ -65,7 +65,7 @@ void CDoorController::loadSettings(CSaveController &_saveController)
 	setSunsetType(sunsetType);
 
 #ifdef DEBUG_DOOR_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CDoorController: Sunrise type is "));
+	DEBUG_SERIAL.print(PMS("CDoorController - sunrise type is: "));
 	DEBUG_SERIAL.println((m_sunriseType == srsst_astronomical) ? PMS("astronomical.") :
 						 (m_sunriseType == srsst_nautical) ? PMS("nautical.") :
 						 (m_sunriseType == srsst_civil) ? PMS("civil.") :
@@ -73,85 +73,150 @@ void CDoorController::loadSettings(CSaveController &_saveController)
 						 PMS("** INVALID **")
 						);
 
-	DEBUG_SERIAL.print(PMS("CDoorController: Sunset type is "));
+	DEBUG_SERIAL.print(PMS("CDoorController - sunset type is :"));
 	DEBUG_SERIAL.println((m_sunsetType == srsst_astronomical) ? PMS("astronomical.") :
 						 (m_sunsetType == srsst_nautical) ? PMS("nautical.") :
 						 (m_sunsetType == srsst_civil) ? PMS("civil.") :
 						 (m_sunsetType == srsst_common) ? PMS("common.") :
 						 PMS("** INVALID **")
 						);
+	DEBUG_SERIAL.println();
 #endif
 }
 
 void CDoorController::tick()
 {
-	if(m_relayms > 0 && m_relayms-- == 0)
-		digitalWrite(PIN_DOOR_RELAY, LOW);
+	// Let the door motor do its thing
+	if(getDoorMotor())
+		getDoorMotor()->tick();
+	else
+		return;
+
+	// We have commanded the door to move, so it should now be
+	// in the correct state
+	if(m_stuckDoorMS && millis() > m_stuckDoorMS)
+	{
+		// We've waited long enough, the door should
+		// be in the correct state by now
+		if(getDoorMotor()->getDoorState() != m_correctState)
+		{
+			m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
+			reportError(telemetry_error_door_stuck);
+		}
+		else
+		{
+			m_stuckDoorMS = 0;
+		}
+	}
 }
 
 void CDoorController::checkTime()
 {
+	// First of all, if the door motor does not know the door state
+	// then there is nothing to do.
+	if(!getDoorMotor())
+	{
+#ifdef DEBUG_DOOR_CONTROLLER
+		DEBUG_SERIAL.println(PMS("CDoorController - no door motor found."));
+		DEBUG_SERIAL.println();
+#endif
+		reportError(telemetry_error_no_door_motor);
+		return;
+	}
+
+	if(getDoorMotor()->getDoorState() == doorController_doorStateUnknown)
+	{
+#ifdef DEBUG_DOOR_CONTROLLER
+		DEBUG_SERIAL.println(PMS("CDoorController - door motor in unknown state."));
+#endif
+		reportError(telemetry_error_door_motor_unknown_state);
+	}
+
 	double current = g_sunCalc.getCurrentTime();
 	double sunrise = g_sunCalc.getSunriseTime(m_sunriseType);
 	double sunset = g_sunCalc.getSunsetTime(m_sunsetType);
 
 #ifdef DEBUG_DOOR_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CDoorController: Door open from "));
+	DEBUG_SERIAL.print(PMS("CDoorController - door open from: "));
 	debugPrintDoubleTime(sunrise, false);
 	DEBUG_SERIAL.print(PMS(" - "));
 	debugPrintDoubleTime(sunset, false);
 	DEBUG_SERIAL.println(PMS(" (UTC)"));
 #endif
 
-	// Update telemetry
-	g_telemetry.send(telemetry_tag_doorOpenTime, sunrise);
-	g_telemetry.send(telemetry_tag_doorCloseTime, sunset);
+	// Update telemetry starting with config info
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_door_config);
+	g_telemetry.sendTerm((int)getSunriseType());
+	g_telemetry.sendTerm((int)getSunsetType());
+	g_telemetry.transmissionEnd();
+
+	// Now, current times and door state
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_door_info);
+	g_telemetry.sendTerm(sunrise);
+	g_telemetry.sendTerm(sunset);
+	g_telemetry.sendTerm((int)getDoorMotor()->getDoorState());
+	g_telemetry.transmissionEnd();
 
 	if(!g_sunCalc.isValidTime(sunrise))
 	{
-		DEBUG_SERIAL.println(PMS("CDoorController: got invalid sunrise time"));
+		reportError(telemetry_error_suncalc_invalid_time);
 		return;
 	}
 
 	if(!g_sunCalc.isValidTime(sunset))
 	{
-		DEBUG_SERIAL.println(PMS("CDoorController: got invalid sunset time"));
+		reportError(telemetry_error_suncalc_invalid_time);
 		return;
 	}
 
-	bool doorShouldBeOpen = timeIsBetween(current, sunrise, sunset);
-	if(m_doorOpen != doorShouldBeOpen)
+	// Check to see if the door state should change.
+	// NOTE: we do it this way because a blind setting of the state
+	// each time would make it impossible to remotely command the door
+	// because the DoorController would keep resetting it to the "correct"
+	// state each minute. So, we check for changes in the correct state and
+	// then tell the door motor where we want it. That way, if you close the door
+	// early, perhaps the birds have already cooped up, then it won't keep forcing
+	// the door back to open until sunset.
+	doorController_doorStateE newCorrectState =
+		timeIsBetween(current, sunrise, sunset) ? doorController_doorOpen : doorController_doorClosed;
+
+	if(m_correctState != newCorrectState)
 	{
 #ifdef COOPDOOR_CHANGE_BEEPER
-		if(doorShouldBeOpen)
+		if(newCorrectState)
 			g_beepController.beep(BEEP_FREQ_INFO, 900, 100, 2);
 		else
 			g_beepController.beep(BEEP_FREQ_INFO, 500, 500, 2);
 #endif
-		toggleDoorState();
+		m_correctState = newCorrectState;
+		getDoorMotor()->setDesiredDoorState(m_correctState);
+
+		m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
+#ifdef DEBUG_DOOR_CONTROLLER
+	if(m_correctState)
+		DEBUG_SERIAL.println(PMS("CDoorController - opening coop door."));
+	else
+		DEBUG_SERIAL.println(PMS("CDoorController - closing coop door."));
+#endif
 	}
 
-	// Send current door state to the telemetry port
-	g_telemetry.send(telemetry_tag_door_state, (double)m_doorOpen);
-
 #ifdef DEBUG_DOOR_CONTROLLER
-	if(doorShouldBeOpen)
-		DEBUG_SERIAL.println(PMS("CDoorController: Coop door should be OPEN."));
+	if(m_correctState)
+		DEBUG_SERIAL.println(PMS("CDoorController - coop door should be OPEN."));
 	else
-		DEBUG_SERIAL.println(PMS("CDoorController: Coop door should be CLOSED."));
+		DEBUG_SERIAL.println(PMS("CDoorController - coop door should be CLOSED."));
+
+	doorController_doorStateE doorState = getDoorMotor()->getDoorState();
+	DEBUG_SERIAL.print(PMS("CDoorController - door motor reports: "));
+
+	DEBUG_SERIAL.println((doorState == doorController_doorOpen) ? PMS("open.") :
+						 (doorState == doorController_doorClosed) ? PMS("closed.") :
+						 (doorState == doorController_doorStateUnknown) ? PMS("UNKNOWN.") :
+						 	PMS("*** INVALID ***"));
 	DEBUG_SERIAL.println();
 #endif
 }
 
-void CDoorController::toggleDoorState()
-{
-	m_doorOpen = !m_doorOpen;
-
-	// Start the relay on timer
-	m_relayms = CDoorController_RelayMS;
-	digitalWrite(PIN_DOOR_RELAY, HIGH);
-
-	// Show the door state on the LED (1 = open)
-	digitalWrite(PIN_DOOR_STATE_LED, m_doorOpen);
-}
 

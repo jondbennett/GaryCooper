@@ -1,11 +1,14 @@
 #ifndef Telemetry_h
 #define Telemetry_h
 
-// Pure base class for commands received by the telemetry module
-class ITelemetry_CommandTarget
+// Pure base class for data received by the telemetry module
+class ITelemetry_ReceiveTarget
 {
 public:
-	virtual void processCommand(int _tag, double _value) = 0;
+	virtual void startReception() = 0;
+	virtual void receiveTerm(int _index, const char *_value) = 0;
+	virtual void receiveChecksumCorrect() = 0;
+	virtual void receiveChecksumError() = 0;
 };
 
 
@@ -19,8 +22,7 @@ typedef enum
 
 
 // Largest distance between commas and such
-#define TParser_TERMSIZE		(16)
-#define TParser_INVALID_CMD		(-1)
+#define CTelemetry_TERMSIZE		(16)
 
 // The telemetry module
 class CTelemetry
@@ -29,7 +31,7 @@ protected:
 
 	// Stuff for processing commands from the house
 	ICommunicationInterface *m_commInterface;
-	ITelemetry_CommandTarget *m_commandTarget;
+	ITelemetry_ReceiveTarget *m_receiveTarget;
 
 	// Current state machine state
 	TParser_State_T m_state;
@@ -37,20 +39,16 @@ protected:
 	// Location to accumulate data as the parse
 	// progresses. Mostly for the stuff between
 	// commas
-	char m_term[TParser_TERMSIZE];
-	int m_termOffset;
-	int m_termNumber;
+	char m_receiveTerm[CTelemetry_TERMSIZE];
+	int m_receiveTermOffset;
+	int m_receiveTermNumber;
 
 	// Running checksum
-	unsigned char m_checksum;
-
-	// The actual command (from process term)
-	int m_cmdTag;
-	double m_cmdValue;
+	unsigned char m_receiveChecksum;
 
 	// Parser processing
 	void parseChar(unsigned char _c);
-	void AddTermChar(unsigned char _c);
+	void addReceiveTermChar(unsigned char _c);
 
 	void processTerm();		// Returns true when valid and recognized sentence is complete
 	unsigned char from_hex(unsigned char _a);
@@ -60,17 +58,27 @@ protected:
 	// Returns true if any sentences were processed (data may have changed)
 	void parse(const unsigned char _buf[], unsigned int _bufLen);
 
+	// Members for sending data
+	int m_transmitTermNumber;
+	int m_transmitChecksum;
+
 public:
 
 	CTelemetry();
 	virtual ~CTelemetry();
 
 	void setInterfaces(ICommunicationInterface *_commInterface,
-				ITelemetry_CommandTarget *_cmdTarget);
+				ITelemetry_ReceiveTarget *_receiveTarget);
 
 	void tick();
 
-	void send(int _tag, double _value);
+	// Interface for sending data
+	void transmissionStart();
+	void sendTerm(const char *_value);
+	void sendTerm(int _value);
+	void sendTerm(bool _value);
+	void sendTerm(double _value);
+	void transmissionEnd();
 };
 
 #endif

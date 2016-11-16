@@ -5,17 +5,19 @@
 
 #include <PMS.h>
 #include <GPSParser.h>
+#include <SaveController.h>
 
 #include "ICommInterface.h"
 #include "Telemetry.h"
 #include "TelemetryTags.h"
 
 #include "Pins.h"
-#include "GaryCooper.h"
-#include "sunriset.h"
 #include "SunCalc.h"
-
-extern CTelemetry g_telemetry;
+#include "sunriset.h"
+#include "DoorController.h"
+#include "LightController.h"
+#include "BeepController.h"
+#include "GaryCooper.h"
 
 ////////////////////////////////////////////////////////////
 // Use GPS data to calculate sunrise, sunset, and current times.
@@ -118,23 +120,41 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	m_sunriseTime_comm = CSunCalc_INVALID_TIME;
 	m_sunsetTime_comm = CSunCalc_INVALID_TIME;
 
-	// If we don't have a lock then
-	// don't bother with the other stuff because
-	// it will not be set
 #ifdef DEBUG_SUNCALC
 	DEBUG_SERIAL.println();
 #endif
 
+	// Location
+	double lat = _gpsData.m_position.m_lat;
+	double lon = _gpsData.m_position.m_lon;
+
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_GPSStatus);
+	g_telemetry.sendTerm(_gpsData.m_GPSLocked);
 	if(_gpsData.m_GPSLocked)
 	{
-		g_telemetry.send(telemetry_tag_GPSLockStatus, 1.);
+		g_telemetry.sendTerm(_gpsData.m_nSatellites);
+		g_telemetry.sendTerm(lat);
+		g_telemetry.sendTerm(lon);
 	}
 	else
+	{
+		const char *empty = PMS("");
+		g_telemetry.sendTerm(empty);
+		g_telemetry.sendTerm(empty);
+		g_telemetry.sendTerm(empty);
+	}
+	g_telemetry.transmissionEnd();
+
+	// If we don't have a lock then
+	// don't bother with the other stuff because
+	// it will not be set
+	if(!_gpsData.m_GPSLocked)
 	{
 #ifdef DEBUG_SUNCALC
 		DEBUG_SERIAL.println(PMS("CSunCalc: GPS not locked."));
 #endif
-		g_telemetry.send(telemetry_tag_GPSLockStatus, 0.);
+		reportError(telemetry_error_GPS_not_locked);
 		return false;
 	}
 
@@ -149,9 +169,6 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	int hour = _gpsData.m_time.m_hour;
 	int minute = _gpsData.m_time.m_minute;
 
-	// Location
-	double lat = _gpsData.m_position.m_lat;
-	double lon = _gpsData.m_position.m_lon;
 
 
 #ifdef DEBUG_SUNCALC
@@ -178,7 +195,7 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 		!GPS_IS_VALID_DATA(lat) ||
 		!GPS_IS_VALID_DATA(lon))
 	{
-		g_telemetry.send(telemetry_tag_error, telemetry_error_GPS_bad_data);
+		reportError(telemetry_error_GPS_bad_data);
 		return false;
 	}
 
@@ -199,14 +216,14 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 				  &m_sunriseTime_comm, &m_sunsetTime_comm );
 
 	// Telemetry
-	g_telemetry.send(telemetry_tag_GPSNSats, _gpsData.m_nSatellites);
-	g_telemetry.send(telemetry_tag_lat, lat);
-	g_telemetry.send(telemetry_tag_lon, lon);
 
-	g_telemetry.send(telemetry_tag_year, year);
-	g_telemetry.send(telemetry_tag_month, month);
-	g_telemetry.send(telemetry_tag_day, day);
-	g_telemetry.send(telemetry_tag_currentTime, m_currentTime);
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_date_time);
+	g_telemetry.sendTerm(year);
+	g_telemetry.sendTerm(month);
+	g_telemetry.sendTerm(day);
+	g_telemetry.sendTerm(m_currentTime);
+	g_telemetry.transmissionEnd();
 
 #ifdef DEBUG_SUNCALC
 	DEBUG_SERIAL.print(PMS("Current Time (UTC): "));
@@ -233,7 +250,6 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	DEBUG_SERIAL.print(PMS(" - "));
 	debugPrintDoubleTime(m_sunsetTime_comm);
 	DEBUG_SERIAL.println();
-
 #endif
 
 	return true;

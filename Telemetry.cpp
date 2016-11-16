@@ -8,12 +8,11 @@
 
 static char *Telemetry_ItoA(int num, char* str, int base);
 static char *Telemetry_DtoA(char *str, double num, int places);
-static void appendChecksum(char *_pcBuffer);
 
 CTelemetry::CTelemetry()
 {
 	m_commInterface = 0;
-	m_commandTarget = 0;
+	m_receiveTarget = 0;
 }
 
 CTelemetry::~CTelemetry()
@@ -21,35 +20,103 @@ CTelemetry::~CTelemetry()
 }
 
 void CTelemetry::setInterfaces(ICommunicationInterface *_commInterface,
-				ITelemetry_CommandTarget *_cmdTarget)
+				ITelemetry_ReceiveTarget *_receiveTarget)
 {
 	m_commInterface = _commInterface;
-	m_commandTarget = _cmdTarget;
+	m_receiveTarget = _receiveTarget;
 }
 
 void CTelemetry::tick()
 {
+	if(!m_commInterface)
+		return;
+
+	while(m_commInterface->bytesInReceiveBuffer())
+	{
+		char parseBuff[CTelemetry_TERMSIZE + 1];
+
+		int dataLen = m_commInterface->read((unsigned char *)parseBuff, sizeof(parseBuff));
+		if(dataLen) parse((unsigned char *)parseBuff, dataLen);
+	}
 }
 
-void CTelemetry::send(int _tag, double _value)
+// Interface for sending data
+void CTelemetry::transmissionStart()
 {
+	// Make sure we have a comm interface to send it
+	if(!m_commInterface)
+		return;
 
-	char telemetryBuf[256];
-	char numberBuf[256];
+	m_transmitTermNumber = 0;
+	m_transmitChecksum = 0;
 
-	// sprintf is not fully implemented on the Arduino
-	strcpy(telemetryBuf, "$");
-	Telemetry_ItoA(_tag, numberBuf, 10);
-	strcat(telemetryBuf, numberBuf);
-	strcat(telemetryBuf, ",");
+	m_commInterface->puts("$");
+	m_commInterface->tick();
+}
+
+void CTelemetry::sendTerm(const char *_value)
+{
+	// Make sure we have a comm interface to send it
+	if(!m_commInterface)
+		return;
+
+	// Copy the data to the buffer, prepending a comma if needed
+	char termBuf[CTelemetry_TERMSIZE * 2];
+	termBuf[0] = '\0';
+	if(m_transmitTermNumber)
+		strcpy(termBuf,",");
+	strncat(termBuf, _value, sizeof(termBuf));
+
+	// Calculate the checksum
+	for(const char *c = termBuf; *c; c++)
+		m_transmitChecksum ^= (int)(*c);
+
+	// Bump term number
+	m_transmitTermNumber++;
+
+	// Finally, send the data
+	m_commInterface->puts(termBuf);
+	m_commInterface->tick();
+}
+
+void CTelemetry::sendTerm(int _value)
+{
+	char numberBuf[CTelemetry_TERMSIZE + 1];
+	Telemetry_ItoA(_value, numberBuf, 10);
+	sendTerm(numberBuf);
+}
+
+void CTelemetry::sendTerm(bool _value)
+{
+	sendTerm((_value)?1:0);
+}
+
+void CTelemetry::sendTerm(double _value)
+{
+	char numberBuf[CTelemetry_TERMSIZE + 1];
 	Telemetry_DtoA(numberBuf, _value, 2);
-	strcat(telemetryBuf, numberBuf);
+	sendTerm(numberBuf);
+}
 
-	appendChecksum(telemetryBuf);
+static const char *s_hexChars = "0123456789ABCDEF";
+void CTelemetry::transmissionEnd()
+{
+	// Make sure we have a comm interface to send it
+	if(!m_commInterface)
+		return;
 
-	// Send the data
-	if(m_commInterface)
-		m_commInterface->puts(telemetryBuf);
+	// Create the checksum string
+	char termBuf[6];
+	termBuf[0] = '*';
+	termBuf[1] = s_hexChars[((m_transmitChecksum & 0xF0) >> 4)];
+	termBuf[2] = s_hexChars[(m_transmitChecksum & 0x0F)];
+	termBuf[3] = '\r';
+	termBuf[4] = '\n';
+	termBuf[5] = '\0';
+
+	// Send it
+	m_commInterface->puts(termBuf);
+	m_commInterface->tick();
 }
 
 // =========================================================
@@ -98,6 +165,10 @@ void CTelemetry::parseChar(unsigned char _c)
 
 				// Change state to term processing
 				m_state = TParser_S_ParsingTerms;
+
+				// Let command target know that we are starting
+				if(m_receiveTarget)
+					m_receiveTarget->startReception();
 			}
 			break;
 
@@ -110,16 +181,16 @@ void CTelemetry::parseChar(unsigned char _c)
 				// a state change
 				case ',':
 					// Process this term
-					m_checksum ^= _c;
+					m_receiveChecksum ^= _c;
 					// Fall through
 
 				case '*':
 					processTerm();
 
 					// And start the next
-					m_termOffset = 0;
-					m_term[m_termOffset] = '\0';
-					m_termNumber++;
+					m_receiveTermOffset = 0;
+					m_receiveTerm[m_receiveTermOffset] = '\0';
+					m_receiveTermNumber++;
 
 					// Star also ends the current term, and it changes state to checksum processing
 					if(_c == '*')
@@ -127,8 +198,8 @@ void CTelemetry::parseChar(unsigned char _c)
 					break;
 
 				default:
-					m_checksum ^= _c;
-					AddTermChar(_c);
+					m_receiveChecksum ^= _c;
+					addReceiveTermChar(_c);
 					break;
 			}
 			break;
@@ -138,14 +209,16 @@ void CTelemetry::parseChar(unsigned char _c)
 			if(_c == '\r')	// This ends the current string so do EOL processing
 			{
 				// First, verify the checksum
-				if(m_termOffset == 2)
+				if(m_receiveTermOffset == 2)
 				{
 					// Check the sentence checksum against ours
-					unsigned char checksum = 16 * from_hex(m_term[0]) + from_hex(m_term[1]);
-					if(checksum == m_checksum)
+					unsigned char checksum = 16 * from_hex(m_receiveTerm[0]) + from_hex(m_receiveTerm[1]);
+					if(m_receiveTarget)
 					{
-						if(m_commandTarget)
-							m_commandTarget->processCommand(m_cmdTag, m_cmdValue);
+						if(checksum == m_receiveChecksum)
+							m_receiveTarget->receiveChecksumCorrect();
+						else
+							m_receiveTarget->receiveChecksumError();
 					}
 				}
 
@@ -158,7 +231,7 @@ void CTelemetry::parseChar(unsigned char _c)
 			else
 			{
 				// Not the end of the string, so keep processing characters
-				AddTermChar(_c);
+				addReceiveTermChar(_c);
 			}
 			break;
 
@@ -179,22 +252,19 @@ void CTelemetry::parseChar(unsigned char _c)
 
 // Add character to accumulating term, but do not
 // overrun the buffer
-void CTelemetry::AddTermChar(unsigned char _c)
+void CTelemetry::addReceiveTermChar(unsigned char _c)
 {
-	if(m_termOffset < (TParser_TERMSIZE - 1))
+	if(m_receiveTermOffset < (CTelemetry_TERMSIZE - 1))
 	{
-		m_term[m_termOffset++] = _c;
-		m_term[m_termOffset] = '\0';
+		m_receiveTerm[m_receiveTermOffset++] = _c;
+		m_receiveTerm[m_receiveTermOffset] = '\0';
 	}
 }
 
 void CTelemetry::processTerm()
 {
-	if(m_termNumber == 0)
-		m_cmdTag = atoi(m_term);
-
-	if(m_termNumber == 1)
-		m_cmdValue = atof(m_term);
+	if(m_receiveTarget)
+		m_receiveTarget->receiveTerm(m_receiveTermNumber, m_receiveTerm);
 }
 
 
@@ -202,14 +272,11 @@ void CTelemetry::reset()
 {
 	m_state = TParser_S_WaitingForStart;
 
-	m_termOffset = 0;
-	m_term[m_termOffset] = '\0';
-	m_termNumber = 0;
+	m_receiveTermOffset = 0;
+	m_receiveTerm[m_receiveTermOffset] = '\0';
+	m_receiveTermNumber = 0;
 
-	m_checksum = 0;
-
-	m_cmdTag = TParser_INVALID_CMD;
-	m_cmdValue = 0.;
+	m_receiveChecksum = 0;
 }
 
 unsigned char CTelemetry::from_hex(unsigned char _a)
@@ -398,38 +465,3 @@ static char* Telemetry_ItoA(int num, char* str, int base)
     return str;
 }
 
-static const char *gs_pcHex = "0123456789ABCDEF";
-static void appendChecksum(char *_pcBuffer)
-{
-	if(_pcBuffer == 0)
-		return;
-
-	int iChecksum = 0;
-	char cs1, cs2;
-	int iLen = strlen(_pcBuffer);
-	if(iLen < 2)
-		return;
-
-	// Append the checksum prototype and line terminators
-	strcat(_pcBuffer, "*XX\r\n");
-
-	// Calculate the checksum
-	// Always skip the first character
-	++_pcBuffer;
-	for(const char *c = _pcBuffer; *c; c++)
-	{
-		if(*c == '*')
-			break;
-
-		iChecksum ^= (int)(*c);
-	}
-
-	// Move from integer to hex characters
-	cs1 = gs_pcHex[((iChecksum & 0xF0) >> 4)];
-	cs2 = gs_pcHex[(iChecksum & 0x0F)];
-
-	// Fill in the checksum prototype with
-	// the actual checksum characters
-	_pcBuffer[iLen + 0] = cs1;
-	_pcBuffer[iLen + 1] = cs2;
-}

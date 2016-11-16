@@ -1,19 +1,26 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-class CCommand : public ITelemetry_CommandTarget
+class CCommand : public ITelemetry_ReceiveTarget
 {
 protected:
 
 	int m_version;
+
+	int m_term0;
+	double m_term1;
+
+	void processCommand(int _tag, double _value);
 	void processCommand_V1(int _tag, double _value);
 
 public:
 	CCommand();
 	virtual ~CCommand();
 
-	virtual void processCommand(int _tag, double _value);
-
+	virtual void startReception();
+	virtual void receiveTerm(int _index, const char *_value);
+	virtual void receiveChecksumCorrect();
+	virtual void receiveChecksumError();
 };
 
 #endif

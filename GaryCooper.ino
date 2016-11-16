@@ -13,17 +13,18 @@
 #include "TelemetryTags.h"
 #include "SlidingBuf.h"
 #include "Comm_Arduino.h"
+#include "Command.h"
 
-#include "GaryCooper.h"
 #include "Pins.h"
 #include "SunCalc.h"
-#include "Command.h"
-#include "BeepController.h"
 #include "DoorController.h"
 #include "LightController.h"
+#include "BeepController.h"
+#include "GaryCooper.h"
 
 // GPS parser
 CGPSParser g_GPSParser;
+static bool s_gpsDataStreamActive = false;
 
 // Door controller
 CDoorController g_doorController;
@@ -42,19 +43,22 @@ bool settingsLoaded = false;
 CSunCalc g_sunCalc;
 
 // Telemetry module
-CComm_Arduino g_telemetryComm;
 CTelemetry g_telemetry;
-CCommand g_commandProcessor;
+static CCommand s_commandProcessor;
+static CComm_Arduino g_telemetryComm;
 
 #define MILLIS_PER_SECOND   (1000L)
 #define SECONDS_BETWEEN_UPDATES	(60L)
 
 unsigned long g_timer;
+unsigned long g_heartbeatMS;
+bool g_heartbeat = false;
 
-void saveSettings()
+void saveSettings(bool _defaults)
 {
+#ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.print(PMS("Save settings... "));
-
+#endif // DEBUG_SETTINGS
 	// Make sure the header is correct
 	g_saveController.updateHeader(GARYCOOPER_DATA_VERSION);
 
@@ -62,36 +66,48 @@ void saveSettings()
 	g_saveController.rewind();
 
 	// Save everything
-	g_doorController.saveSettings(g_saveController);
-	g_lightController.saveSettings(g_saveController);
+	g_doorController.saveSettings(g_saveController, _defaults);
+	g_lightController.saveSettings(g_saveController , _defaults);
 
+#ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.println(PMS("complete."));
+#endif
 }
 
 void loadSettings()
 {
+#ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.print(PMS("Load settings checking header version: "));
+#endif // DEBUG_SETTINGS
 
 	// If the data version is incorrect then we need to update the EEPROM
 	// to default settings
 	int headerVersion = g_saveController.getDataVersion();
+
+#ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.print(headerVersion);
 	DEBUG_SERIAL.print(PMS(" - "));
-
+#endif
 	if(headerVersion != GARYCOOPER_DATA_VERSION)
 	{
+#ifdef DEBUG_SETTINGS
 		DEBUG_SERIAL.println(PMS("INCORRECT."));
 
 		// Save defaults from object constructors
 		DEBUG_SERIAL.println(PMS("Saving default settings."));
-		saveSettings();
+#endif
+		saveSettings(true);
 	}
 	else
 	{
+#ifdef DEBUG_SETTINGS
 		DEBUG_SERIAL.println(PMS("CORRECT."));
+#endif
 	}
 
+#ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.println(PMS("Loading settings... "));
+#endif
 
 	// Make sure we start at the beginning
 	g_saveController.rewind();
@@ -99,11 +115,17 @@ void loadSettings()
 	g_doorController.loadSettings(g_saveController);
 	g_lightController.loadSettings(g_saveController);
 
+#ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.println(PMS("Load settings complete."));
+#endif
 }
 
 void setup()
 {
+	// Setup door indicator
+	pinMode(PIN_HEARTBEAT_LED, OUTPUT);
+	g_heartbeatMS = millis() + MILLIS_PER_SECOND;
+
 	// Prep debug port
 	DEBUG_SERIAL.begin(DEBUG_BAUD_RATE);
 
@@ -112,7 +134,7 @@ void setup()
 
 	// Prep the telemetry port
 	g_telemetryComm.open(TELEMETRY_PORT, TELEMETRY_BAUD_RATE);
-	g_telemetry.setInterfaces(&g_telemetryComm, &g_commandProcessor);
+	g_telemetry.setInterfaces(&g_telemetryComm, &s_commandProcessor);
 
 	// Setup the door controller
 	g_doorController.setup();
@@ -132,8 +154,13 @@ void setup()
 
 void loop()
 {
-	// Monitor for GPS data flow
-	static bool s_gpsDataStreamActive = false;
+	// Blink the heartbeat LED
+	if(millis() > g_heartbeatMS)
+	{
+		g_heartbeat = !g_heartbeat;
+		digitalWrite(PIN_HEARTBEAT_LED, g_heartbeat);
+		g_heartbeatMS = millis() + MILLIS_PER_SECOND;
+	}
 
 	// Load settings?
 	if(!settingsLoaded)
@@ -143,12 +170,8 @@ void loop()
 	}
 
 	// Let the telemetry module process serial data
-	do
-	{
-		g_telemetryComm.tick();
-		g_telemetry.tick();
-	}
-	while(g_telemetryComm.wantsTick());
+	g_telemetryComm.tick();
+	g_telemetry.tick();
 
 	// Let the door controller time its relay
 	g_doorController.tick();
@@ -187,17 +210,16 @@ void loop()
 		g_timer = millis() + (MILLIS_PER_SECOND * SECONDS_BETWEEN_UPDATES);
 
 		// Send telemetry version number
-		g_telemetry.send(telemetry_tag_version, TELEMETRY_VERSION);
-
+		g_telemetry.transmissionStart();
+		g_telemetry.sendTerm(telemetry_tag_version);
+		g_telemetry.sendTerm(TELEMETRY_VERSION_01);
+		g_telemetry.transmissionEnd();
 
 		// If the GPS is not sending any data then report an error
 		if(!s_gpsDataStreamActive)
 		{
-			DEBUG_SERIAL.println(PMS("*** NOT RECEIVING ANY DATA FROM GPS. ***"));
-
 			g_GPSParser.getGPSData().clear();
-			g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, 1);
-			g_telemetry.send(telemetry_tag_error, telemetry_error_GPS_no_data);
+			reportError(telemetry_error_GPS_no_data);
 		}
 		s_gpsDataStreamActive = false;
 
@@ -206,10 +228,6 @@ void loop()
 		{
 			g_doorController.checkTime();
 			g_lightController.checkTime();
-		}
-		else
-		{
-			g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, 2);
 		}
 	}
 }
@@ -224,4 +242,68 @@ void debugPrintDoubleTime(double _t, bool _newline)
 	if(_newline) DEBUG_SERIAL.println();
 }
 
+void reportError(int _errorTag)
+{
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_error);
+	g_telemetry.sendTerm(_errorTag);
+	g_telemetry.transmissionEnd();
 
+	// Report error to console
+	String errorString(_errorTag);
+
+	switch(_errorTag)
+	{
+	case telemetry_error_GPS_no_data:
+		errorString = PMS("telemetry_error_GPS_no_data");
+		break;
+
+	case telemetry_error_GPS_bad_data:
+		errorString = PMS("telemetry_error_GPS_bad_data");
+		break;
+
+	case telemetry_error_GPS_not_locked:
+		errorString = PMS("telemetry_error_GPS_not_locked");
+		break;
+
+	case telemetry_error_suncalc_invalid_time:
+		errorString = PMS("telemetry_error_suncalc_invalid_time");
+		break;
+
+	case telemetry_error_no_door_motor:
+		errorString = PMS("telemetry_error_no_door_motor");
+		break;
+
+	case telemetry_error_door_motor_unknown_state:
+		errorString = PMS("telemetry_error_door_motor_unknown_state");
+		break;
+
+	case telemetry_error_door_stuck:
+		errorString = PMS("telemetry_error_door_stuck");
+		break;
+
+	case telemetry_error_version_not_set:
+		errorString = PMS("telemetry_error_version_not_set");
+		break;
+
+	case telemetry_error_received_invalid_command:
+		errorString = PMS("telemetry_error_received_invalid_command");
+		break;
+
+	case telemetry_error_received_invalid_command_value:
+		errorString = PMS("telemetry_error_received_invalid_command_value");
+		break;
+
+	default:
+		// This is handled in the initialization of the error string
+		break;
+	}
+
+	DEBUG_SERIAL.println();
+	DEBUG_SERIAL.print(PMS("*** ERROR: "));
+	DEBUG_SERIAL.println(errorString);
+	DEBUG_SERIAL.println();
+#ifdef BEEP_ON_ERROR
+	g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, _errorTag);
+#endif
+}

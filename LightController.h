@@ -28,7 +28,8 @@
 class CLightController
 {
 protected:
-	bool m_lightIsOn;
+	bool m_lightIsOn;			// Current on/off status of the light
+	bool m_lastStatusCheck;		// 'Correct' status on last check
 
 	double m_minimumDayLength;
 	double m_extraLightTime;
@@ -61,7 +62,7 @@ public:
 			m_extraLightTime = _elt;
 	}
 
-	void saveSettings(CSaveController &_saveController);
+	void saveSettings(CSaveController &_saveController, bool _defaults);
 	void loadSettings(CSaveController &_saveController);
 
 	void checkTime();

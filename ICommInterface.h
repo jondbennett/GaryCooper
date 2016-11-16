@@ -19,6 +19,8 @@ class ICommunicationInterface
 
 		virtual int gets(char *_pBuf, int _iBufLen) = 0;
 		virtual bool puts(const char * _pBuf) = 0;
+
+		virtual void tick() = 0;	// Support for polled environments
 };
 
 #endif

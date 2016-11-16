@@ -11,17 +11,12 @@
 #include "Telemetry.h"
 #include "TelemetryTags.h"
 
-#include "GaryCooper.h"
 #include "Pins.h"
 #include "SunCalc.h"
-#include "BeepController.h"
 #include "DoorController.h"
 #include "LightController.h"
-
-extern CBeepController g_beepController;
-extern CSunCalc g_sunCalc;
-extern CDoorController g_doorController;
-extern CTelemetry g_telemetry;
+#include "BeepController.h"
+#include "GaryCooper.h"
 
 // Deal with rolling to the next day
 static void CLight_Controller_clipTime(double &_t)
@@ -51,6 +46,8 @@ static void CLight_Controller_clipTime(double &_t)
 CLightController::CLightController()
 {
 	m_lightIsOn = false;
+	m_lastStatusCheck = false;
+
 	m_minimumDayLength = CLight_Controller_Minimum_Day_Length;
 	m_extraLightTime = CLight_Controller_Extra_Light_Time;
 }
@@ -59,8 +56,15 @@ CLightController::~CLightController()
 {
 }
 
-void CLightController::saveSettings(CSaveController &_saveController)
+void CLightController::saveSettings(CSaveController &_saveController, bool _defaults)
 {
+	// Save defaults?
+	if(_defaults)
+	{
+		setMinimumDayLength(CLight_Controller_Minimum_Day_Length);
+		setExtraLightTime(CLight_Controller_Extra_Light_Time);
+	}
+
 	// Save
 	_saveController.writeDouble(getMinimumDayLength());
 	_saveController.writeDouble(getExtraLightTime());
@@ -73,10 +77,10 @@ void CLightController::loadSettings(CSaveController &_saveController)
 	setExtraLightTime(_saveController.readDouble());
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController: Minimum day length is "));
+	DEBUG_SERIAL.print(PMS("CLightController - minimum day length is :"));
 	DEBUG_SERIAL.println(getMinimumDayLength());
 
-	DEBUG_SERIAL.print(PMS("CLightController: Extra light time is "));
+	DEBUG_SERIAL.print(PMS("CLightController - extra light time is :"));
 	DEBUG_SERIAL.println(getExtraLightTime());
 #endif
 }
@@ -118,7 +122,7 @@ void CLightController::checkTime()
 	if(dayLength > m_minimumDayLength)
 	{
 #ifdef DEBUG_LIGHT_CONTROLLER
-		DEBUG_SERIAL.print(PMS("CLightController: this day is long enough, no supplemental light needed."));
+		DEBUG_SERIAL.println(PMS("CLightController - this day is long enough, no supplemental light needed."));
 #endif
 
 		supplementalIllumination = false;
@@ -143,36 +147,41 @@ void CLightController::checkTime()
 	CLight_Controller_clipTime(eveningLightOffTime);
 
 	// Telemetry
-	g_telemetry.send(telemetry_tag_morningLightOnTime, morningLightOnTime);
-	g_telemetry.send(telemetry_tag_morningLightOffTime, morningLightOffTime);
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_light_config);
+	g_telemetry.sendTerm(getMinimumDayLength());
+	g_telemetry.sendTerm(getExtraLightTime());
+	g_telemetry.transmissionEnd();
 
-	g_telemetry.send(telemetry_tag_eveningLightOnTime, eveningLightOnTime);
-	g_telemetry.send(telemetry_tag_eveningLightOffTime, eveningLightOffTime);
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_light_info);
+	g_telemetry.sendTerm(morningLightOnTime);
+	g_telemetry.sendTerm(morningLightOffTime);
+	g_telemetry.sendTerm(eveningLightOnTime);
+	g_telemetry.sendTerm(eveningLightOffTime);
+	g_telemetry.sendTerm(m_lightIsOn);
+	g_telemetry.transmissionEnd();
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController: Chicken day length is "));
+	DEBUG_SERIAL.print(PMS("CLightController - chicken day length is: "));
 	debugPrintDoubleTime(dayLength);
 
 	if(supplementalIllumination)
 	{
-		DEBUG_SERIAL.print(PMS("CLightController: Supplemental lighting duration is "));
+		DEBUG_SERIAL.print(PMS("CLightController - supplemental lighting duration is: "));
 		debugPrintDoubleTime(m_minimumDayLength - dayLength);
 	}
-	else
-	{
-		DEBUG_SERIAL.print(PMS("CLightController: No supplemental light needed"));
-	}
 
-	DEBUG_SERIAL.print(PMS("CLightController: Chicken mid day (UTC) "));
+	DEBUG_SERIAL.print(PMS("CLightController - chicken mid day (UTC): "));
 	debugPrintDoubleTime(midDay);
 
-	DEBUG_SERIAL.print(PMS("CLightController: Morning light (UTC): "));
+	DEBUG_SERIAL.print(PMS("CLightController - morning light (UTC): "));
 	debugPrintDoubleTime(morningLightOnTime, false);
 
 	DEBUG_SERIAL.print(PMS(" - "));
 	debugPrintDoubleTime(morningLightOffTime);
 
-	DEBUG_SERIAL.print(PMS("CLightController: Evening light on (UTC): "));
+	DEBUG_SERIAL.print(PMS("CLightController - evening light on (UTC): "));
 	debugPrintDoubleTime(eveningLightOnTime, false);
 
 	DEBUG_SERIAL.print(PMS(" - "));
@@ -180,24 +189,31 @@ void CLightController::checkTime()
 
 #endif
 
-	// OK, now figure if the light should be on or off.
+	// Check to see if the light status should change
+	bool newStatusCheck;
 	if(currentTime <= midDay)
-		setLightOn(timeIsBetween(currentTime, morningLightOnTime, morningLightOffTime));
+		newStatusCheck = timeIsBetween(currentTime, morningLightOnTime, morningLightOffTime);
 	else
-		setLightOn(timeIsBetween(currentTime, eveningLightOnTime, eveningLightOffTime));
+		newStatusCheck = timeIsBetween(currentTime, eveningLightOnTime, eveningLightOffTime);
+
+	// If the light status should have changed since I last checked
+	// then change the light's state
+	if(newStatusCheck != m_lastStatusCheck)
+		setLightOn(newStatusCheck);
+	m_lastStatusCheck = newStatusCheck;
+
+	// And send the telemetry
+
 }
 
 void CLightController::setLightOn(bool _on)
 {
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController: Coop light should be "));
+	DEBUG_SERIAL.print(PMS("CLightController - coop light should be: "));
 	DEBUG_SERIAL.println((_on) ? PMS("ON.") : PMS("OFF."));
 #endif
 
 	m_lightIsOn = _on;
-
 	digitalWrite(PIN_DOOR_RELAY, m_lightIsOn ? HIGH : LOW);
-
-	g_telemetry.send(telemetry_tag_light_state, (double)m_lightIsOn);
 }
