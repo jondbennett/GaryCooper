@@ -40,7 +40,7 @@ typedef enum
 
 	telemetry_error_no_door_motor,
 	telemetry_error_door_motor_unknown_state,
-	telemetry_error_door_stuck,
+	telemetry_error_door_not_responding,
 
 	telemetry_error_version_not_set,
 	telemetry_error_received_invalid_command,

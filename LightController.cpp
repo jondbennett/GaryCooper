@@ -88,9 +88,9 @@ void CLightController::loadSettings(CSaveController &_saveController)
 void CLightController::setup()
 {
 
-	// Setup the door relay
-	pinMode(PIN_DOOR_RELAY, OUTPUT);
-	digitalWrite(PIN_DOOR_RELAY, LOW);
+	// Setup the light relay
+	pinMode(PIN_LIGHT_RELAY, OUTPUT);
+	digitalWrite(PIN_LIGHT_RELAY, RELAY_OFF);
 }
 
 void CLightController::checkTime()
@@ -201,19 +201,16 @@ void CLightController::checkTime()
 	if(newStatusCheck != m_lastStatusCheck)
 		setLightOn(newStatusCheck);
 	m_lastStatusCheck = newStatusCheck;
-
-	// And send the telemetry
-
 }
 
 void CLightController::setLightOn(bool _on)
 {
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController - coop light should be: "));
+	DEBUG_SERIAL.print(PMS("CLightController - setting coop relay: "));
 	DEBUG_SERIAL.println((_on) ? PMS("ON.") : PMS("OFF."));
 #endif
 
 	m_lightIsOn = _on;
-	digitalWrite(PIN_DOOR_RELAY, m_lightIsOn ? HIGH : LOW);
+	digitalWrite(PIN_LIGHT_RELAY, m_lightIsOn ? RELAY_ON : RELAY_OFF);
 }

@@ -210,8 +210,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		DEBUG_SERIAL.print(PMS("CCommand - force door: "));
 		DEBUG_SERIAL.println((doorState == doorController_doorOpen) ? PMS("Open.") : PMS("Closed."));
 #endif
-		if(getDoorMotor())
-			getDoorMotor()->setDesiredDoorState(doorState);
+		g_doorController.setDoorState(doorState);
 		ackCommand(_tag);
 		break;
 

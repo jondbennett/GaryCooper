@@ -49,6 +49,7 @@ void CDoorMotor_GarrageDoor::setup()
 {
 	// Setup the door relay
 	pinMode(PIN_DOOR_RELAY, OUTPUT);
+	digitalWrite(PIN_DOOR_RELAY, RELAY_OFF);
 
 	// Setup the door position switch sensor inputs
 	pinMode(PIN_DOOR_OPEN_SWITCH, INPUT_PULLUP);
@@ -72,7 +73,7 @@ void CDoorMotor_GarrageDoor::setDesiredDoorState(doorController_doorStateE _door
 
 		// Start the relay on timer
 		m_relayMS = millis() + CDoorMotor_GarrageDoor_RelayMS;
-		digitalWrite(PIN_DOOR_RELAY, HIGH);
+		digitalWrite(PIN_DOOR_RELAY, RELAY_ON);
 
 #ifdef DEBUG_DOOR_MOTOR
 		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - cycling relay."));
@@ -99,5 +100,5 @@ void CDoorMotor_GarrageDoor::tick()
 	// Monitor the relay and turn it off
 	// when the timer hits zero
 	if(millis() > m_relayMS)
-		digitalWrite(PIN_DOOR_RELAY, LOW);
+		digitalWrite(PIN_DOOR_RELAY, RELAY_OFF);
 }

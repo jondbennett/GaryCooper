@@ -278,8 +278,8 @@ void reportError(int _errorTag)
 		errorString = PMS("telemetry_error_door_motor_unknown_state");
 		break;
 
-	case telemetry_error_door_stuck:
-		errorString = PMS("telemetry_error_door_stuck");
+	case telemetry_error_door_not_responding:
+		errorString = PMS("telemetry_error_door_not_responding");
 		break;
 
 	case telemetry_error_version_not_set:

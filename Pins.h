@@ -7,11 +7,17 @@
 // Onboard LED
 #define PIN_HEARTBEAT_LED	(LED_BUILTIN)
 
+// Door switches
+#define PIN_DOOR_OPEN_SWITCH	(24)	// Door open sensor switch
+#define PINT_DOOR_CLOSED_SWITCH	(25)	// Door closed sensor switch
+
 // Relay pins
-#define	PIN_DOOR_RELAY			(2)		// Door push-button relay
-#define PIN_LIGHT_RELAY			(3)		// Light on/off relay
-#define PIN_DOOR_OPEN_SWITCH	(5)		// Door open sensor switch
-#define PINT_DOOR_CLOSED_SWITCH	(6)		// Door closed sensor switch
+#define RELAY_ON	(0)
+#define RELAY_OFF	(1)
+
+#define	PIN_DOOR_RELAY			(26)	// Door push-button relay
+#define PIN_LIGHT_RELAY			(27)	// Light on/off relay
+
 #define PIN_BEEPER				(45)	// Audio Beeper
 
 // Debug serial port

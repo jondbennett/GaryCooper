@@ -24,6 +24,7 @@
 CDoorController::CDoorController()
 {
 	m_correctState = doorController_doorStateUnknown;
+	m_commandedState = doorController_doorStateUnknown;
 
 	m_sunriseType = srsst_nautical;
 	m_sunsetType = srsst_civil;
@@ -87,9 +88,14 @@ void CDoorController::loadSettings(CSaveController &_saveController)
 void CDoorController::tick()
 {
 	// Let the door motor do its thing
-	if(getDoorMotor())
-		getDoorMotor()->tick();
-	else
+	if(!getDoorMotor())
+		return;
+
+	getDoorMotor()->tick();
+
+	// See of the door has been commanded to a specific state.
+	// If not then there is nothing to do
+	if(m_commandedState == doorController_doorStateUnknown)
 		return;
 
 	// We have commanded the door to move, so it should now be
@@ -98,10 +104,10 @@ void CDoorController::tick()
 	{
 		// We've waited long enough, the door should
 		// be in the correct state by now
-		if(getDoorMotor()->getDoorState() != m_correctState)
+		if(getDoorMotor()->getDoorState() != m_commandedState)
 		{
 			m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
-			reportError(telemetry_error_door_stuck);
+			reportError(telemetry_error_door_not_responding);
 		}
 		else
 		{
@@ -192,9 +198,8 @@ void CDoorController::checkTime()
 			g_beepController.beep(BEEP_FREQ_INFO, 500, 500, 2);
 #endif
 		m_correctState = newCorrectState;
-		getDoorMotor()->setDesiredDoorState(m_correctState);
+		setDoorState(m_correctState);
 
-		m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
 #ifdef DEBUG_DOOR_CONTROLLER
 		if(m_correctState)
 			DEBUG_SERIAL.println(PMS("CDoorController - opening coop door."));
@@ -218,6 +223,22 @@ void CDoorController::checkTime()
 						 PMS("*** INVALID ***"));
 	DEBUG_SERIAL.println();
 #endif
+}
+
+void CDoorController::setDoorState(doorController_doorStateE _state)
+{
+	// Remember the commanded state, no matter who commanded it
+	m_commandedState = _state;
+	if(getDoorMotor()->getDoorState() != m_commandedState)
+	{
+		getDoorMotor()->setDesiredDoorState(m_commandedState);
+
+#ifdef DEBUG_DOOR_CONTROLLER
+		DEBUG_SERIAL.println(PMS("CDoorController - starting door response monitor."));
+#endif
+		m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
+	}
+
 }
 
 

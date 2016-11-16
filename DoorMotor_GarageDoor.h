@@ -12,7 +12,7 @@
 // motor (such as stepper motors) can be used with minimal
 // change to the other software, especially the CDoorController class.
 ////////////////////////////////////////////////////////////
-#define CDoorMotor_GarrageDoor_RelayMS (250)	// Time to keep relay on for toggle
+#define CDoorMotor_GarrageDoor_RelayMS (500)	// Time to keep relay on for toggle
 class CDoorMotor_GarrageDoor : public IDoorMotor
 {
 protected:

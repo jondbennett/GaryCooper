@@ -34,6 +34,7 @@ class CDoorController
 {
 protected:
 	doorController_doorStateE m_correctState;
+	doorController_doorStateE m_commandedState;
 
 	eSunrise_Sunset_T m_sunriseType;
 	eSunrise_Sunset_T m_sunsetType;
@@ -73,6 +74,7 @@ public:
 
 	void tick();
 	void checkTime();
+	void setDoorState(doorController_doorStateE _state);
 };
 
 #endif
