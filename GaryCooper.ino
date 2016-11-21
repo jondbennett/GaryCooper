@@ -47,11 +47,17 @@ CTelemetry g_telemetry;
 static CCommand s_commandProcessor;
 static CComm_Arduino g_telemetryComm;
 
+// Various behavioral delays
 #define MILLIS_PER_SECOND   (1000L)
-#define SECONDS_BETWEEN_UPDATES	(60L)
+
+//#define SECONDS_BETWEEN_UPDATES	(60 * MILLIS_PER_SECOND)
+#define SECONDS_BETWEEN_UPDATES	(5 * MILLIS_PER_SECOND)
+
+// Frequency of telemetry transmission
+#define TELEMETRY_DELAY	(1 * MILLIS_PER_SECOND)
 
 unsigned long g_timer;
-unsigned long g_heartbeatMS;
+unsigned long g_telemetryMS;
 bool g_heartbeat = false;
 
 void saveSettings(bool _defaults)
@@ -122,9 +128,9 @@ void loadSettings()
 
 void setup()
 {
-	// Setup door indicator
+	// Setup heartbeat indicator
 	pinMode(PIN_HEARTBEAT_LED, OUTPUT);
-	g_heartbeatMS = millis() + MILLIS_PER_SECOND;
+	g_telemetryMS = millis() + MILLIS_PER_SECOND;
 
 	// Prep debug port
 	DEBUG_SERIAL.begin(DEBUG_BAUD_RATE);
@@ -154,19 +160,34 @@ void setup()
 
 void loop()
 {
-	// Blink the heartbeat LED
-	if(millis() > g_heartbeatMS)
-	{
-		g_heartbeat = !g_heartbeat;
-		digitalWrite(PIN_HEARTBEAT_LED, g_heartbeat);
-		g_heartbeatMS = millis() + MILLIS_PER_SECOND;
-	}
-
 	// Load settings?
 	if(!settingsLoaded)
 	{
 		loadSettings();
 		settingsLoaded = true;
+	}
+
+	// Send telemetry
+	if(millis() > g_telemetryMS)
+	{
+		// Blink the LED
+		g_heartbeat = !g_heartbeat;
+		digitalWrite(PIN_HEARTBEAT_LED, g_heartbeat);
+		g_telemetryMS = millis() + TELEMETRY_DELAY;
+
+		// Send telemetry version number
+		g_telemetry.transmissionStart();
+		g_telemetry.sendTerm(telemetry_tag_version);
+		g_telemetry.sendTerm(TELEMETRY_VERSION_01);
+		g_telemetry.transmissionEnd();
+
+		// Send standing errors
+		sendErrors();
+
+		// And the rest of the telemetry
+		g_sunCalc.sendTelemetry();
+		g_doorController.sendTelemetry();
+		g_lightController.sendTelemetry();
 	}
 
 	// Let the telemetry module process serial data
@@ -185,6 +206,7 @@ void loop()
 		unsigned char GPSData[256];
 		unsigned int GPSDataLen = 0;
 
+		// Get the data from the serial port
 		GPSDataLen = GPS_SERIAL.available();
 		if(GPSDataLen > sizeof(GPSData - 1))
 			GPSDataLen = sizeof(GPSData - 1);
@@ -197,30 +219,34 @@ void loop()
 			String rawGPS((const char *)GPSData);
 			DEBUG_SERIAL.print(rawGPS);
 #endif
-
+			// Parse the GPS data
 			g_GPSParser.parse(GPSData, GPSDataLen);
+
+			// Note that we have received some data
+			// from the GPS serial port.
 			s_gpsDataStreamActive = true;
 		}
 	}
 
-	// Update processing
+	// If the update timer has completed then
+	// read the GPS data and check the time to
+	// see if anything needs to be done
 	if(millis() >= g_timer)
 	{
 		// Prep for next update
-		g_timer = millis() + (MILLIS_PER_SECOND * SECONDS_BETWEEN_UPDATES);
-
-		// Send telemetry version number
-		g_telemetry.transmissionStart();
-		g_telemetry.sendTerm(telemetry_tag_version);
-		g_telemetry.sendTerm(TELEMETRY_VERSION_01);
-		g_telemetry.transmissionEnd();
+		g_timer = millis() + SECONDS_BETWEEN_UPDATES;
 
 		// If the GPS is not sending any data then report an error
 		if(!s_gpsDataStreamActive)
 		{
 			g_GPSParser.getGPSData().clear();
-			reportError(telemetry_error_GPS_no_data);
+			reportError(telemetry_error_GPS_no_data, true);
 		}
+		else
+		{
+			reportError(telemetry_error_GPS_no_data, false);
+		}
+
 		s_gpsDataStreamActive = false;
 
 		// If we have a valid time fix, control the door and light
@@ -232,6 +258,7 @@ void loop()
 	}
 }
 
+// Utility functions
 void debugPrintDoubleTime(double _t, bool _newline)
 {
 	int hour = (int)_t;
@@ -242,56 +269,68 @@ void debugPrintDoubleTime(double _t, bool _newline)
 	if(_newline) DEBUG_SERIAL.println();
 }
 
-void reportError(int _errorTag)
+static uint16_t s_errorFlags = 0;
+void reportError(uint16_t _errorTag, bool _set)
 {
-	g_telemetry.transmissionStart();
-	g_telemetry.sendTerm(telemetry_tag_error);
-	g_telemetry.sendTerm(_errorTag);
-	g_telemetry.transmissionEnd();
+	int beepCount = 0;
+
+	// Log the error for transmission
+	if(_set)
+	{
+		// Don't keep re-setting them
+		if(s_errorFlags & _errorTag)
+			return;
+
+		// Or it in
+		s_errorFlags |= _errorTag;
+	}
+	else
+	{
+		// Don't keep re-clearing them
+		if(!(s_errorFlags & _errorTag))
+			return;
+
+		// Mask it out
+		s_errorFlags &= ~_errorTag;
+	}
 
 	// Report error to console
 	String errorString(_errorTag);
-
 	switch(_errorTag)
 	{
 	case telemetry_error_GPS_no_data:
 		errorString = PMS("telemetry_error_GPS_no_data");
+		beepCount = 1;
 		break;
 
 	case telemetry_error_GPS_bad_data:
 		errorString = PMS("telemetry_error_GPS_bad_data");
+		beepCount = 2;
 		break;
 
 	case telemetry_error_GPS_not_locked:
 		errorString = PMS("telemetry_error_GPS_not_locked");
+		beepCount = 3;
 		break;
 
 	case telemetry_error_suncalc_invalid_time:
 		errorString = PMS("telemetry_error_suncalc_invalid_time");
+		beepCount = 4;
 		break;
 
 	case telemetry_error_no_door_motor:
 		errorString = PMS("telemetry_error_no_door_motor");
+		beepCount = 5;
 		break;
 
 	case telemetry_error_door_motor_unknown_state:
 		errorString = PMS("telemetry_error_door_motor_unknown_state");
+		beepCount = 6;
 		break;
 
 	case telemetry_error_door_not_responding:
 		errorString = PMS("telemetry_error_door_not_responding");
-		break;
-
-	case telemetry_error_version_not_set:
-		errorString = PMS("telemetry_error_version_not_set");
-		break;
-
-	case telemetry_error_received_invalid_command:
-		errorString = PMS("telemetry_error_received_invalid_command");
-		break;
-
-	case telemetry_error_received_invalid_command_value:
-		errorString = PMS("telemetry_error_received_invalid_command_value");
+		beepCount = 7;
 		break;
 
 	default:
@@ -300,10 +339,28 @@ void reportError(int _errorTag)
 	}
 
 	DEBUG_SERIAL.println();
-	DEBUG_SERIAL.print(PMS("*** ERROR: "));
+	if(_set)
+	{
+		DEBUG_SERIAL.print(PMS("*** SET ERROR: "));
+#ifdef BEEP_ON_ERROR
+		g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, beepCount);
+#else
+		beepCount = beepCount;	// No warning if unused variable
+#endif
+	}
+	else
+	{
+		DEBUG_SERIAL.print(PMS("*** CLEAR ERROR: "));
+	}
 	DEBUG_SERIAL.println(errorString);
 	DEBUG_SERIAL.println();
-#ifdef BEEP_ON_ERROR
-	g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, _errorTag);
-#endif
 }
+
+void sendErrors()
+{
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_error);
+	g_telemetry.sendTerm(s_errorFlags);
+	g_telemetry.transmissionEnd();
+}
+

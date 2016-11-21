@@ -38,6 +38,8 @@ CDoorMotor_GarrageDoor::CDoorMotor_GarrageDoor()
 {
 	m_relayMS = 0;
 	m_desiredDoorState = doorController_doorStateUnknown;
+
+	m_seekSwitchCommanded = false;
 }
 
 CDoorMotor_GarrageDoor::~CDoorMotor_GarrageDoor()
@@ -53,7 +55,7 @@ void CDoorMotor_GarrageDoor::setup()
 
 	// Setup the door position switch sensor inputs
 	pinMode(PIN_DOOR_OPEN_SWITCH, INPUT_PULLUP);
-	pinMode(PINT_DOOR_CLOSED_SWITCH, INPUT_PULLUP);
+	pinMode(PIN_DOOR_CLOSED_SWITCH, INPUT_PULLUP);
 }
 
 void CDoorMotor_GarrageDoor::setDesiredDoorState(doorController_doorStateE _doorState)
@@ -89,7 +91,7 @@ doorController_doorStateE CDoorMotor_GarrageDoor::getDoorState()
 	if(digitalRead(PIN_DOOR_OPEN_SWITCH) == 0)
 		return doorController_doorOpen;
 
-	if(digitalRead(PINT_DOOR_CLOSED_SWITCH) == 0)
+	if(digitalRead(PIN_DOOR_CLOSED_SWITCH) == 0)
 		return doorController_doorClosed;
 
 	return doorController_doorStateUnknown;
@@ -97,6 +99,20 @@ doorController_doorStateE CDoorMotor_GarrageDoor::getDoorState()
 
 void CDoorMotor_GarrageDoor::tick()
 {
+	if(!m_seekSwitchCommanded)
+	{
+		// I just started. This is my first tick. If I don't know
+		// where the door is then toggle the relay to get it to
+		// go somewhere!
+		m_seekSwitchCommanded = true;
+		if(getDoorState() == doorController_doorStateUnknown)
+		{
+				// Start the relay on timer
+			m_relayMS = millis() + CDoorMotor_GarrageDoor_RelayMS;
+			digitalWrite(PIN_DOOR_RELAY, RELAY_ON);
+		}
+	}
+
 	// Monitor the relay and turn it off
 	// when the timer hits zero
 	if(millis() > m_relayMS)

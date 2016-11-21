@@ -12,34 +12,13 @@
 // is represented as 11.75, and so on.
 ////////////////////////////////////////////////////////////
 #define CSunCalc_INVALID_TIME	(-999)
-
-// Various types of sunrise and sunset times
-typedef enum
-{
-	srsst_invalid = -1,
-	srsst_astronomical = 0,		// Longest day
-	srsst_nautical,
-	srsst_civil,
-	srsst_common,				// Shortest day
-} eSunrise_Sunset_T;
-
 class CSunCalc
 {
 protected:
 
 	double m_currentTime;
-
-	double m_sunriseTime_astro;
-	double m_sunsetTime_aastro;
-
-	double m_sunriseTime_naut;
-	double m_sunsetTime_naut;
-
-	double m_sunriseTime_civil;
-	double m_sunsetTime_civil;
-
-	double m_sunriseTime_comm;
-	double m_sunsetTime_comm;
+	double m_sunriseTime;	// Nautical
+	double m_sunsetTime;	// Civil
 
 public:
 	CSunCalc();
@@ -57,13 +36,25 @@ public:
 		return m_currentTime;
 	}
 
-	double getSunriseTime(eSunrise_Sunset_T _type);
-	double getSunsetTime(eSunrise_Sunset_T _type);
 
+	double getSunriseTime()
+	{
+		return m_sunriseTime;
+	}
+
+	double getSunsetTime()
+	{
+		return m_sunsetTime;
+	}
 
 	bool processGPSData(CGPSParserData &_gpsData);
+	void sendTelemetry();
 };
 
+// Deal with rolling to the next day
+void normalizeTime(double &_t);
+
+// Check time ranges
 bool timeIsBetween(double _currentTime, double _first, double _second);
 
 #endif

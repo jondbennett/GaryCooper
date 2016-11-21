@@ -19,6 +19,15 @@ protected:
 	unsigned long m_relayMS;				// Relay on timer
 	doorController_doorStateE m_desiredDoorState;
 
+	// This is kind of strange. Garage door controllers are
+	// click to open, click to close. If I come up with none
+	// of the position switches closed the I have no idea where
+	// the door is (open or closed), so I click the relay once
+	// in hopes that a switch will close at some point. This
+	// is only done ONCE on my fist tick, and only of there
+	// are no position sensor switches closed
+	bool m_seekSwitchCommanded;
+
 public:
 	CDoorMotor_GarrageDoor();
 	virtual ~CDoorMotor_GarrageDoor();

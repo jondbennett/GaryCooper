@@ -9,7 +9,7 @@
 
 // Door switches
 #define PIN_DOOR_OPEN_SWITCH	(24)	// Door open sensor switch
-#define PINT_DOOR_CLOSED_SWITCH	(25)	// Door closed sensor switch
+#define PIN_DOOR_CLOSED_SWITCH	(25)	// Door closed sensor switch
 
 // Relay pins
 #define RELAY_ON	(0)
@@ -26,7 +26,6 @@
 
 // Telemetry serial port
 #define TELEMETRY_PORT			(1)
-#define TELEMETRY_BAUD_RATE		(115200)
 
 // GPS serial port
 #define GPS_SERIAL  	Serial2

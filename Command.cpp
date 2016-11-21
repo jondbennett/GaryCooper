@@ -101,7 +101,7 @@ void CCommand::processCommand(int _tag, double _value)
 		// been established
 		if(m_version == TELEMETRY_VERSION_INVALID)
 		{
-			reportError(telemetry_error_version_not_set);
+			nakCommand(_tag, telemetry_cmd_nak_version_not_set);
 #ifdef DEBUG_COMMAND_PROCESSOR
 			DEBUG_SERIAL.println(PMS("CCommand - command rejected (version not set)."));
 #endif
@@ -120,89 +120,114 @@ void CCommand::ackCommand(int _tag)
 	g_telemetry.transmissionEnd();
 }
 
+void CCommand::nakCommand(int _tag, telemetrycommandNakT _reason)
+{
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_command_nak);
+	g_telemetry.sendTerm(_tag);
+	g_telemetry.sendTerm(_reason);
+	g_telemetry.transmissionEnd();
+}
+
 void CCommand::processCommand_V1(int _tag, double _value)
 {
-	eSunrise_Sunset_T sunriseType = (eSunrise_Sunset_T)_value;
-	eSunrise_Sunset_T sunsetType = (eSunrise_Sunset_T)_value;
+	int sunriseOffset = (int)_value;
+	int sunsetOffset = (int)_value;
 	bool lightOn = (_value > 0.) ? true : false;
 	doorController_doorStateE doorState = (doorController_doorStateE)_value;
 
 	// Act on the command
 	switch(_tag)
 	{
-	case telemetry_command_setSunriseType:
-#ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - set sunrise type: "));
-		DEBUG_SERIAL.println((sunriseType == srsst_astronomical) ? PMS("astronomical.") :
-							 (sunriseType == srsst_nautical) ? PMS("nautical.") :
-							 (sunriseType == srsst_civil) ? PMS("civil.") :
-							 (sunriseType == srsst_common) ? PMS("common.") :
-							 PMS("** INVALID **")
-							);
-#endif
-		if(sunriseType >= srsst_astronomical && sunriseType <= srsst_common)
+	case telemetry_command_setSunriseOffset:
+		if(g_doorController.setSunriseOffset(sunriseOffset))
 		{
-			g_doorController.setSunriseType(sunriseType);
+#ifdef DEBUG_COMMAND_PROCESSOR
+			DEBUG_SERIAL.print(PMS("CCommand - set sunrise offset: "));
+			DEBUG_SERIAL.println(sunriseOffset);
+#endif
 			saveSettings();
 			loadSettings();
 			ackCommand(_tag);
 		}
 		else
 		{
-			reportError(telemetry_error_received_invalid_command_value);
+#ifdef DEBUG_COMMAND_PROCESSOR
+			DEBUG_SERIAL.print(PMS("CCommand - set sunrise offset: FAILED - "));
+			DEBUG_SERIAL.println(sunriseOffset);
+#endif
+			nakCommand(_tag, telemetry_cmd_nak_invalid_value);
 		}
 		break;
 
-	case telemetry_command_setSunsetType:
-#ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - set sunset type: "));
-		DEBUG_SERIAL.println((sunsetType == srsst_astronomical) ? PMS("astronomical.") :
-							 (sunsetType == srsst_nautical) ? PMS("nautical.") :
-							 (sunsetType == srsst_civil) ? PMS("civil.") :
-							 (sunsetType == srsst_common) ? PMS("common.") :
-							 PMS("** INVALID **")
-							);
-#endif
-		if(sunsetType >= srsst_astronomical && sunsetType <= srsst_common)
+	case telemetry_command_setSunsetOffset:
+		if(g_doorController.setSunsetOffset(sunsetOffset))
 		{
-			g_doorController.setSunsetType(sunsetType);
+#ifdef DEBUG_COMMAND_PROCESSOR
+			DEBUG_SERIAL.print(PMS("CCommand - set sunset offset: "));
+			DEBUG_SERIAL.println(sunsetOffset);
+#endif
 			saveSettings();
 			loadSettings();
 			ackCommand(_tag);
 		}
 		else
 		{
-			reportError(telemetry_error_received_invalid_command_value);
+#ifdef DEBUG_COMMAND_PROCESSOR
+			DEBUG_SERIAL.print(PMS("CCommand - set sunset offset: FAILED - "));
+			DEBUG_SERIAL.println(sunsetOffset);
+#endif
+			nakCommand(_tag, telemetry_cmd_nak_invalid_value);
 		}
 		break;
 
 	case telemetry_command_setMinimumDayLength:
+		if(g_lightController.setMinimumDayLength(_value))
+		{
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - set minimum day length: "));
-		DEBUG_SERIAL.println(_value);
+			DEBUG_SERIAL.print(PMS("CCommand - set minimum day length: "));
+			DEBUG_SERIAL.println(_value);
 #endif
-		g_lightController.setMinimumDayLength(_value);
-		saveSettings();
-		loadSettings();
-		ackCommand(_tag);
+			saveSettings();
+			loadSettings();
+			ackCommand(_tag);
+		}
+		else
+		{
+#ifdef DEBUG_COMMAND_PROCESSOR
+			DEBUG_SERIAL.print(PMS("CCommand - set minimum day length: FAILED - "));
+			DEBUG_SERIAL.println(_value);
+#endif
+			nakCommand(_tag, telemetry_cmd_nak_invalid_value);
+		}
 		break;
 
 	case telemetry_command_setExtraIllumination:
+		if(g_lightController.setExtraLightTime(_value))
+		{
 #ifdef DEBUG_COMMAND_PROCESSOR
 		DEBUG_SERIAL.print(PMS("CCommand - set extra light time: "));
 		DEBUG_SERIAL.println(_value);
 #endif
-		g_lightController.setExtraLightTime(_value);
-		saveSettings();
-		loadSettings();
-		ackCommand(_tag);
+			saveSettings();
+			loadSettings();
+			ackCommand(_tag);
+		}
+		else
+		{
+#ifdef DEBUG_COMMAND_PROCESSOR
+		DEBUG_SERIAL.print(PMS("CCommand - set extra light time: FAILED - "));
+		DEBUG_SERIAL.println(_value);
+#endif
+			nakCommand(_tag, telemetry_cmd_nak_invalid_value);
+		}
 		break;
 
 	case telemetry_command_forceDoor:
 		// Make sure we got a good state
 		if((doorState != doorController_doorOpen) && (doorState != doorController_doorClosed))
 		{
-			reportError(telemetry_error_received_invalid_command_value);
+			nakCommand(_tag, telemetry_cmd_nak_invalid_value);
 			break;
 		}
 
@@ -235,7 +260,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		DEBUG_SERIAL.print(PMS(" Value: "));
 		DEBUG_SERIAL.println(_value);
 #endif
-		reportError(telemetry_error_received_invalid_command);
+		nakCommand(_tag, telemetry_cmd_nak_invalid_command);
 		break;
 	}
 }

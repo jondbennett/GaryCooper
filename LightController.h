@@ -22,8 +22,8 @@
 // some time before closing the door in the evening to help the
 // chickens find their way to the coop and get on the perch.
 ////////////////////////////////////////////////////////////
-#define CLight_Controller_Minimum_Day_Length	(13.)	// Minimum day length
-#define CLight_Controller_Extra_Light_Time		(0.5)	// Early light on or off duration
+#define CLight_Controller_Minimum_Day_Length	(0.)	// Minimum day length (hours)
+#define CLight_Controller_Extra_Light_Time		(30.)	// Early light on or off duration (min)
 
 class CLightController
 {
@@ -33,6 +33,12 @@ protected:
 
 	double m_minimumDayLength;
 	double m_extraLightTime;
+
+	double m_morningLightOnTime;
+	double m_morningLightOffTime;
+
+	double m_eveningLightOnTime;
+	double m_eveningLightOffTime;
 
 public:
 	CLightController();
@@ -45,10 +51,15 @@ public:
 		return m_minimumDayLength;
 	}
 
-	void setMinimumDayLength(double _dayLen)
+	bool setMinimumDayLength(double _dayLen)
 	{
-		if(_dayLen >= 0. && _dayLen < 16.)
+		if(_dayLen >= 0. && _dayLen <= GARY_COOPER_LIGHT_MAX_DAY_LENGTH)
+		{
 			m_minimumDayLength = _dayLen;
+			return true;
+		}
+
+		return false;
 	}
 
 	double getExtraLightTime()
@@ -56,16 +67,22 @@ public:
 		return m_extraLightTime;
 	}
 
-	void setExtraLightTime(double _elt)
+	bool setExtraLightTime(double _elt)
 	{
-		if(_elt >= 0. && _elt < 4.)
+		if(_elt >= 0. && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
+		{
 			m_extraLightTime = _elt;
+			return true;
+		}
+
+		return false;
 	}
 
 	void saveSettings(CSaveController &_saveController, bool _defaults);
 	void loadSettings(CSaveController &_saveController);
 
 	void checkTime();
+	void sendTelemetry();
 
 	void setLightOn(bool _on);
 };

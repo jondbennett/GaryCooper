@@ -63,6 +63,7 @@ public:
 
 	bool puts(const char * _buf)
 	{
+
 		return m_transmitBuf.puts(_buf);
 	}
 

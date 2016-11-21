@@ -7,9 +7,9 @@
 ////////////////////////////////////
 
 
-//#define	DEBUG_RAW_GPS
+//#define DEBUG_RAW_GPS
 #define DEBUG_SUNCALC
-#define	DEBUG_DOOR_CONTROLLER
+#define DEBUG_DOOR_CONTROLLER
 #define DEBUG_DOOR_MOTOR
 #define DEBUG_LIGHT_CONTROLLER
 #define DEBUG_COMMAND_PROCESSOR
@@ -20,7 +20,7 @@
 #define COOPDOOR_CHANGE_BEEPER
 
 // Beep to report errors?
-//#define BEEP_ON_ERROR
+#define BEEP_ON_ERROR
 
 // The data version for tracking the settings,
 // and the settings functions
@@ -35,9 +35,11 @@ extern CLightController g_lightController;
 extern CBeepController g_beepController;
 extern CSunCalc g_sunCalc;
 extern CSaveController g_saveController;
+extern CGPSParser g_GPSParser;
 
 // Utility functions
 void debugPrintDoubleTime(double _t, bool _newline = true);
-void reportError(int _errorTag);
 
+void reportError(uint16_t _errorTag, bool _set);
+void sendErrors();
 #endif

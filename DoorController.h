@@ -8,8 +8,7 @@
 // Use GPS to decide when to open and close the coop door
 ////////////////////////////////////////////////////////////
 
-#define CDoorController_Stuck_door_delayMS	(30000)	// Thirty seconds should do it
-
+#define CDoorController_Stuck_door_delayMS	(15000)	// Fifteen seconds should do it
 typedef enum
 {
 	doorController_doorStateUnknown = -1,
@@ -36,8 +35,8 @@ protected:
 	doorController_doorStateE m_correctState;
 	doorController_doorStateE m_commandedState;
 
-	eSunrise_Sunset_T m_sunriseType;
-	eSunrise_Sunset_T m_sunsetType;
+	int  m_sunriseOffset;
+	int  m_sunsetOffset;
 
 	unsigned long m_stuckDoorMS;
 
@@ -47,33 +46,49 @@ public:
 
 	void setup();
 
-	eSunrise_Sunset_T getSunriseType()
+	int getSunriseOffset()
 	{
-		return m_sunriseType;
+		return m_sunriseOffset;
 	}
 
-	void setSunriseType(eSunrise_Sunset_T _sunriseType)
+	bool setSunriseOffset(int _sunriseOffset)
 	{
-		if(_sunriseType >= srsst_astronomical && _sunriseType <= srsst_common)
-			m_sunriseType = _sunriseType;
+		if(_sunriseOffset >= -GARY_COOPER_DOOR_MAX_TIME_OFFSET && _sunriseOffset <= GARY_COOPER_DOOR_MAX_TIME_OFFSET)
+		{
+			m_sunriseOffset = _sunriseOffset;
+			return true;
+		}
+
+		return false;
 	}
 
-	eSunrise_Sunset_T getSunsetType()
+	int getSunsetOffset()
 	{
-		return m_sunsetType;
+		return m_sunsetOffset;
 	}
 
-	void setSunsetType(eSunrise_Sunset_T _sunsetType)
+	bool setSunsetOffset(int _sunsetOffset)
 	{
-		if(_sunsetType >= srsst_astronomical && _sunsetType <= srsst_common)
-			m_sunsetType = _sunsetType;
+		if(_sunsetOffset >= -GARY_COOPER_DOOR_MAX_TIME_OFFSET && _sunsetOffset <= GARY_COOPER_DOOR_MAX_TIME_OFFSET)
+		{
+			m_sunsetOffset = _sunsetOffset;
+			return true;
+		}
+
+		return false;
 	}
+
+	double getSunriseTime();
+	double getSunsetTime();
 
 	void saveSettings(CSaveController &_saveController, bool _defaults);
 	void loadSettings(CSaveController &_saveController);
 
 	void tick();
+
 	void checkTime();
+	void sendTelemetry();
+
 	void setDoorState(doorController_doorStateE _state);
 };
 

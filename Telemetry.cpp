@@ -32,10 +32,14 @@ void CTelemetry::tick()
 
 	while(m_commInterface->bytesInReceiveBuffer())
 	{
-		char parseBuff[CTelemetry_TERMSIZE + 1];
+		char parseBuff[256];
 
 		int dataLen = m_commInterface->read((unsigned char *)parseBuff, sizeof(parseBuff));
-		if(dataLen) parse((unsigned char *)parseBuff, dataLen);
+		if(dataLen)
+		{
+			if(parseBuff[0] != '\0')
+				parse((unsigned char *)parseBuff, dataLen);
+		}
 	}
 }
 
@@ -58,6 +62,7 @@ void CTelemetry::sendTerm(const char *_value)
 	// Make sure we have a comm interface to send it
 	if(!m_commInterface)
 		return;
+
 
 	// Copy the data to the buffer, prepending a comma if needed
 	char termBuf[CTelemetry_TERMSIZE * 2];
@@ -84,6 +89,14 @@ void CTelemetry::sendTerm(int _value)
 	Telemetry_ItoA(_value, numberBuf, 10);
 	sendTerm(numberBuf);
 }
+
+void CTelemetry::sendTerm(unsigned int _value)
+{
+	char numberBuf[CTelemetry_TERMSIZE + 1];
+	Telemetry_ItoA(_value, numberBuf, 10);
+	sendTerm(numberBuf);
+}
+
 
 void CTelemetry::sendTerm(bool _value)
 {
@@ -120,7 +133,7 @@ void CTelemetry::transmissionEnd()
 
 // =========================================================
 // Returns true if any sentences were processed (data may have changed)
-void CTelemetry::parse(const unsigned char _buf[], unsigned int _bufLen)
+void CTelemetry::parse(const unsigned char *_buf, unsigned int _bufLen)
 {
 	unsigned int index;
 	const unsigned char *cPtr = _buf;

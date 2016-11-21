@@ -18,13 +18,6 @@
 #include "BeepController.h"
 #include "GaryCooper.h"
 
-// Deal with rolling to the next day
-static void CLight_Controller_clipTime(double &_t)
-{
-	while (_t < 0.) _t += 24.;
-	while (_t > 24.) _t -= 24.;
-}
-
 ////////////////////////////////////////////////////////////
 // Control the Chicken coop light to adjust for shorter days
 // in the winter and keep egg production up.
@@ -50,6 +43,12 @@ CLightController::CLightController()
 
 	m_minimumDayLength = CLight_Controller_Minimum_Day_Length;
 	m_extraLightTime = CLight_Controller_Extra_Light_Time;
+
+	m_morningLightOnTime = CSunCalc_INVALID_TIME;
+	m_morningLightOffTime = CSunCalc_INVALID_TIME;
+
+	m_eveningLightOnTime = CSunCalc_INVALID_TIME;
+	m_eveningLightOffTime = CSunCalc_INVALID_TIME;
 }
 
 CLightController::~CLightController()
@@ -77,10 +76,10 @@ void CLightController::loadSettings(CSaveController &_saveController)
 	setExtraLightTime(_saveController.readDouble());
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController - minimum day length is :"));
+	DEBUG_SERIAL.print(PMS("CLightController - minimum day length is: "));
 	DEBUG_SERIAL.println(getMinimumDayLength());
 
-	DEBUG_SERIAL.print(PMS("CLightController - extra light time is :"));
+	DEBUG_SERIAL.print(PMS("CLightController - extra light time is: "));
 	DEBUG_SERIAL.println(getExtraLightTime());
 #endif
 }
@@ -96,25 +95,31 @@ void CLightController::setup()
 void CLightController::checkTime()
 {
 	double currentTime = g_sunCalc.getCurrentTime();
+	m_morningLightOnTime = CSunCalc_INVALID_TIME;
+	m_morningLightOffTime = CSunCalc_INVALID_TIME;
+
+	m_eveningLightOnTime = CSunCalc_INVALID_TIME;
+	m_eveningLightOffTime = CSunCalc_INVALID_TIME;
 
 	// Make sure the current time is valid
 	if(CSunCalc_INVALID_TIME == currentTime) return;
 
 	// Figure out when the door opens and closes
-	double doorOpenTime = g_sunCalc.getSunriseTime(g_doorController.getSunriseType());
-	double doorCloseTime = g_sunCalc.getSunsetTime(g_doorController.getSunsetType());
+	double doorOpenTime = g_doorController.getSunriseTime();
+	double doorCloseTime = g_doorController.getSunsetTime();
 
 	// Make sure the door times are valid
-	if(CSunCalc_INVALID_TIME == doorOpenTime) return;
-	if(CSunCalc_INVALID_TIME == doorCloseTime) return;
+	if((CSunCalc_INVALID_TIME == doorOpenTime) ||
+			(CSunCalc_INVALID_TIME == doorCloseTime))
+			return;
 
 	// Find mid day for the chickens
 	double midDay = doorOpenTime + ((doorCloseTime - doorOpenTime) / 2.);
-	CLight_Controller_clipTime(midDay);
+	normalizeTime(midDay);
 
 	// Day length (for the chickens) is based on their normal wake / sleep cycle
 	double dayLength = doorCloseTime - doorOpenTime;
-	CLight_Controller_clipTime(midDay);
+	normalizeTime(dayLength);
 
 	// If the day length (eg in summer) is greater that the required illuminated day length
 	// then we illuminate from civil sunset until the door closes
@@ -124,43 +129,38 @@ void CLightController::checkTime()
 #ifdef DEBUG_LIGHT_CONTROLLER
 		DEBUG_SERIAL.println(PMS("CLightController - this day is long enough, no supplemental light needed."));
 #endif
-
 		supplementalIllumination = false;
 	}
 
 	// Calculate light on and off times
 	double halfIlluminationTime = m_minimumDayLength / 2.;
 
-	double morningLightOnTime = (supplementalIllumination) ? midDay - halfIlluminationTime
-								: doorOpenTime;
-	double morningLightOffTime = doorOpenTime + m_extraLightTime;
+	m_morningLightOnTime = (supplementalIllumination) ? midDay - halfIlluminationTime
+						   : doorOpenTime;
+	normalizeTime(m_morningLightOnTime);
 
-	double eveningLightOnTime = doorCloseTime - m_extraLightTime;
-	double eveningLightOffTime = (supplementalIllumination) ? midDay + halfIlluminationTime
-								 : doorCloseTime;
+	m_morningLightOffTime = doorOpenTime + m_extraLightTime;
+	normalizeTime(m_morningLightOffTime);
 
-	// Make sure the adjusted times make sense
-	CLight_Controller_clipTime(morningLightOnTime);
-	CLight_Controller_clipTime(morningLightOffTime);
+	m_eveningLightOnTime = doorCloseTime - m_extraLightTime;
+	normalizeTime(m_eveningLightOnTime);
 
-	CLight_Controller_clipTime(eveningLightOnTime);
-	CLight_Controller_clipTime(eveningLightOffTime);
+	m_eveningLightOffTime = (supplementalIllumination) ? midDay + halfIlluminationTime
+							: doorCloseTime;
+	normalizeTime(m_eveningLightOffTime);
 
-	// Telemetry
-	g_telemetry.transmissionStart();
-	g_telemetry.sendTerm(telemetry_tag_light_config);
-	g_telemetry.sendTerm(getMinimumDayLength());
-	g_telemetry.sendTerm(getExtraLightTime());
-	g_telemetry.transmissionEnd();
+	// Check to see if the light status should change
+	bool newStatusCheck;
+	if(currentTime <= midDay)
+		newStatusCheck = timeIsBetween(currentTime, m_morningLightOnTime, m_morningLightOffTime);
+	else
+		newStatusCheck = timeIsBetween(currentTime, m_eveningLightOnTime, m_eveningLightOffTime);
 
-	g_telemetry.transmissionStart();
-	g_telemetry.sendTerm(telemetry_tag_light_info);
-	g_telemetry.sendTerm(morningLightOnTime);
-	g_telemetry.sendTerm(morningLightOffTime);
-	g_telemetry.sendTerm(eveningLightOnTime);
-	g_telemetry.sendTerm(eveningLightOffTime);
-	g_telemetry.sendTerm(m_lightIsOn);
-	g_telemetry.transmissionEnd();
+	// If the light status should have changed since I last checked
+	// then change the light's state
+	if(newStatusCheck != m_lastStatusCheck)
+		setLightOn(newStatusCheck);
+	m_lastStatusCheck = newStatusCheck;
 
 #ifdef DEBUG_LIGHT_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CLightController - chicken day length is: "));
@@ -176,38 +176,46 @@ void CLightController::checkTime()
 	debugPrintDoubleTime(midDay);
 
 	DEBUG_SERIAL.print(PMS("CLightController - morning light on (UTC): "));
-	debugPrintDoubleTime(morningLightOnTime, false);
+	debugPrintDoubleTime(m_morningLightOnTime, false);
 
 	DEBUG_SERIAL.print(PMS(" - "));
-	debugPrintDoubleTime(morningLightOffTime);
+	debugPrintDoubleTime(m_morningLightOffTime);
 
 	DEBUG_SERIAL.print(PMS("CLightController - evening light on (UTC): "));
-	debugPrintDoubleTime(eveningLightOnTime, false);
+	debugPrintDoubleTime(m_eveningLightOnTime, false);
 
 	DEBUG_SERIAL.print(PMS(" - "));
-	debugPrintDoubleTime(eveningLightOffTime);
+	debugPrintDoubleTime(m_eveningLightOffTime);
 
+	DEBUG_SERIAL.print(PMS("CLightController - Light is currently: "));
+	DEBUG_SERIAL.println((m_lastStatusCheck) ? PMS("ON.") : PMS("OFF."));
 #endif
+}
 
-	// Check to see if the light status should change
-	bool newStatusCheck;
-	if(currentTime <= midDay)
-		newStatusCheck = timeIsBetween(currentTime, morningLightOnTime, morningLightOffTime);
-	else
-		newStatusCheck = timeIsBetween(currentTime, eveningLightOnTime, eveningLightOffTime);
+void CLightController::sendTelemetry()
+{
+	// Telemetry
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_light_config);
+	g_telemetry.sendTerm(getMinimumDayLength());
+	g_telemetry.sendTerm(getExtraLightTime());
+	g_telemetry.transmissionEnd();
 
-	// If the light status should have changed since I last checked
-	// then change the light's state
-	if(newStatusCheck != m_lastStatusCheck)
-		setLightOn(newStatusCheck);
-	m_lastStatusCheck = newStatusCheck;
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_light_info);
+	g_telemetry.sendTerm(m_morningLightOnTime);
+	g_telemetry.sendTerm(m_morningLightOffTime);
+	g_telemetry.sendTerm(m_eveningLightOnTime);
+	g_telemetry.sendTerm(m_eveningLightOffTime);
+	g_telemetry.sendTerm(m_lightIsOn);
+	g_telemetry.transmissionEnd();
 }
 
 void CLightController::setLightOn(bool _on)
 {
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController - setting coop relay: "));
+	DEBUG_SERIAL.print(PMS("CLightController - setting coop light relay: "));
 	DEBUG_SERIAL.println((_on) ? PMS("ON.") : PMS("OFF."));
 #endif
 

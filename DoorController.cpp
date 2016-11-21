@@ -26,8 +26,8 @@ CDoorController::CDoorController()
 	m_correctState = doorController_doorStateUnknown;
 	m_commandedState = doorController_doorStateUnknown;
 
-	m_sunriseType = srsst_nautical;
-	m_sunsetType = srsst_civil;
+	m_sunriseOffset = 0.;
+	m_sunsetOffset = 0.;
 
 	m_stuckDoorMS = 0;
 }
@@ -47,40 +47,30 @@ void CDoorController::saveSettings(CSaveController &_saveController, bool _defau
 	// Should I setup for default settings?
 	if(_defaults)
 	{
-		setSunriseType(srsst_nautical);
-		setSunsetType(srsst_civil);
+		setSunriseOffset(0.);
+		setSunsetOffset(0.);
 	}
 
 	// Save settings
-	_saveController.writeInt(getSunriseType());
-	_saveController.writeInt(getSunsetType());
+	_saveController.writeInt(getSunriseOffset());
+	_saveController.writeInt(getSunsetOffset());
 }
 
 void CDoorController::loadSettings(CSaveController &_saveController)
 {
 	// Load settings
-	eSunrise_Sunset_T sunriseType = (eSunrise_Sunset_T)_saveController.readInt();
-	setSunriseType(sunriseType);
+	int sunriseOffset = _saveController.readInt();
+	setSunriseOffset(sunriseOffset);
 
-	eSunrise_Sunset_T sunsetType = (eSunrise_Sunset_T)_saveController.readInt();
-	setSunsetType(sunsetType);
+	int sunsetOffset = _saveController.readInt();
+	setSunsetOffset(sunsetOffset);
 
 #ifdef DEBUG_DOOR_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CDoorController - sunrise type is: "));
-	DEBUG_SERIAL.println((m_sunriseType == srsst_astronomical) ? PMS("astronomical.") :
-						 (m_sunriseType == srsst_nautical) ? PMS("nautical.") :
-						 (m_sunriseType == srsst_civil) ? PMS("civil.") :
-						 (m_sunriseType == srsst_common) ? PMS("common.") :
-						 PMS("** INVALID **")
-						);
+	DEBUG_SERIAL.print(PMS("CDoorController - sunrise offset is: "));
+	DEBUG_SERIAL.println(getSunriseOffset());
 
-	DEBUG_SERIAL.print(PMS("CDoorController - sunset type is :"));
-	DEBUG_SERIAL.println((m_sunsetType == srsst_astronomical) ? PMS("astronomical.") :
-						 (m_sunsetType == srsst_nautical) ? PMS("nautical.") :
-						 (m_sunsetType == srsst_civil) ? PMS("civil.") :
-						 (m_sunsetType == srsst_common) ? PMS("common.") :
-						 PMS("** INVALID **")
-						);
+	DEBUG_SERIAL.print(PMS("CDoorController - sunset offset is :"));
+	DEBUG_SERIAL.println(getSunsetOffset());
 	DEBUG_SERIAL.println();
 #endif
 }
@@ -98,22 +88,42 @@ void CDoorController::tick()
 	if(m_commandedState == doorController_doorStateUnknown)
 		return;
 
-	// We have commanded the door to move, so it should now be
+	// We have commanded the door to move, so it should soon be
 	// in the correct state
+	if((m_stuckDoorMS > 0) && getDoorMotor()->getDoorState() == m_commandedState)
+	{
+		m_stuckDoorMS = 0;
+#ifdef DEBUG_DOOR_CONTROLLER
+		DEBUG_SERIAL.println(PMS("CDoorController - door motor has reached commanded state... Monitoring ends."));
+#endif
+		reportError(telemetry_error_door_not_responding, false);
+		return;
+	}
+
+	// The door has not reached the correct state. Has the
+	// timer timed out?
 	if(m_stuckDoorMS && millis() > m_stuckDoorMS)
 	{
-		// We've waited long enough, the door should
-		// be in the correct state by now
-		if(getDoorMotor()->getDoorState() != m_commandedState)
-		{
-			m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
-			reportError(telemetry_error_door_not_responding);
-		}
-		else
-		{
-			m_stuckDoorMS = 0;
-		}
+#ifdef DEBUG_DOOR_CONTROLLER
+		DEBUG_SERIAL.println(PMS("CDoorController - door motor has NOT reached commanded state... Monitoring continues."));
+#endif
+		m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
+		reportError(telemetry_error_door_not_responding, true);
 	}
+}
+
+double CDoorController::getSunriseTime()
+{
+	double sunrise = g_sunCalc.getSunriseTime() + (getSunriseOffset() / 60.);
+	normalizeTime(sunrise);
+	return sunrise;
+}
+
+double CDoorController::getSunsetTime()
+{
+	double sunset = g_sunCalc.getSunsetTime() + (getSunsetOffset() / 60.);
+	normalizeTime(sunset);
+	return sunset;
 }
 
 void CDoorController::checkTime()
@@ -126,57 +136,61 @@ void CDoorController::checkTime()
 		DEBUG_SERIAL.println(PMS("CDoorController - no door motor found."));
 		DEBUG_SERIAL.println();
 #endif
-		reportError(telemetry_error_no_door_motor);
+		reportError(telemetry_error_no_door_motor, true);
 		return;
 	}
-
-	if(getDoorMotor()->getDoorState() == doorController_doorStateUnknown)
+	else
 	{
-#ifdef DEBUG_DOOR_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CDoorController - door motor in unknown state."));
-#endif
-		reportError(telemetry_error_door_motor_unknown_state);
-		return;
+		reportError(telemetry_error_no_door_motor, false);
 	}
 
+	// If the door state is unknown and we are not waiting for it to
+	// move then we have a problem
+	if(m_stuckDoorMS == 0)
+	{
+		if(getDoorMotor()->getDoorState() == doorController_doorStateUnknown)
+		{
+#ifdef DEBUG_DOOR_CONTROLLER
+			DEBUG_SERIAL.println(PMS("CDoorController - door motor in unknown state."));
+#endif
+			reportError(telemetry_error_door_motor_unknown_state, true);
+			return;
+		}
+		else
+		{
+#ifdef DEBUG_DOOR_CONTROLLER
+			DEBUG_SERIAL.println(PMS("CDoorController - door motor state OK."));
+#endif
+			reportError(telemetry_error_door_motor_unknown_state, false);
+		}
+	}
+
+	// Get the times and keep going
 	double current = g_sunCalc.getCurrentTime();
-	double sunrise = g_sunCalc.getSunriseTime(m_sunriseType);
-	double sunset = g_sunCalc.getSunsetTime(m_sunsetType);
+	double sunrise = getSunriseTime();
+	double sunset = getSunsetTime();
 
 #ifdef DEBUG_DOOR_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CDoorController - door open from: "));
-	debugPrintDoubleTime(sunrise, false);
+	debugPrintDoubleTime(getSunriseTime(), false);
 	DEBUG_SERIAL.print(PMS(" - "));
-	debugPrintDoubleTime(sunset, false);
+	debugPrintDoubleTime(getSunsetTime(), false);
 	DEBUG_SERIAL.println(PMS(" (UTC)"));
 #endif
 
-	// Update telemetry starting with config info
-	g_telemetry.transmissionStart();
-	g_telemetry.sendTerm(telemetry_tag_door_config);
-	g_telemetry.sendTerm((int)getSunriseType());
-	g_telemetry.sendTerm((int)getSunsetType());
-	g_telemetry.transmissionEnd();
-
-	// Now, current times and door state
-	g_telemetry.transmissionStart();
-	g_telemetry.sendTerm(telemetry_tag_door_info);
-	g_telemetry.sendTerm(sunrise);
-	g_telemetry.sendTerm(sunset);
-	g_telemetry.sendTerm((int)getDoorMotor()->getDoorState());
-	g_telemetry.transmissionEnd();
-
+	// Validate the values and report telemetry
 	if(!g_sunCalc.isValidTime(sunrise))
 	{
-		reportError(telemetry_error_suncalc_invalid_time);
+		reportError(telemetry_error_suncalc_invalid_time, true);
 		return;
 	}
 
 	if(!g_sunCalc.isValidTime(sunset))
 	{
-		reportError(telemetry_error_suncalc_invalid_time);
+		reportError(telemetry_error_suncalc_invalid_time, true);
 		return;
 	}
+	reportError(telemetry_error_suncalc_invalid_time, false);
 
 	// Check to see if the door state should change.
 	// NOTE: we do it this way because a blind setting of the state
@@ -223,6 +237,32 @@ void CDoorController::checkTime()
 						 PMS("*** INVALID ***"));
 	DEBUG_SERIAL.println();
 #endif
+}
+
+void CDoorController::sendTelemetry()
+{
+	double sunrise = getSunriseTime();
+	double sunset = getSunsetTime();
+
+	// Update telemetry starting with config info
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_door_config);
+	g_telemetry.sendTerm((int)getSunriseOffset());
+	g_telemetry.sendTerm((int)getSunsetOffset());
+	g_telemetry.transmissionEnd();
+
+	// Now, current times and door state
+	g_telemetry.transmissionStart();
+	g_telemetry.sendTerm(telemetry_tag_door_info);
+	g_telemetry.sendTerm(sunrise);
+	g_telemetry.sendTerm(sunset);
+
+	if(m_stuckDoorMS == 0)
+		g_telemetry.sendTerm((int)getDoorMotor()->getDoorState());
+	else
+		g_telemetry.sendTerm((int)m_commandedState);
+
+	g_telemetry.transmissionEnd();
 }
 
 void CDoorController::setDoorState(doorController_doorStateE _state)
