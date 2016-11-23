@@ -22,8 +22,6 @@
 // some time before closing the door in the evening to help the
 // chickens find their way to the coop and get on the perch.
 ////////////////////////////////////////////////////////////
-#define CLight_Controller_Minimum_Day_Length	(0.)	// Minimum day length (hours)
-#define CLight_Controller_Extra_Light_Time		(0.5)	// Early light on or off duration (min)
 
 class CLightController
 {
@@ -53,7 +51,7 @@ public:
 
 	telemetrycommandResponseT setMinimumDayLength(double _dayLen)
 	{
-		if(_dayLen >= 0. && _dayLen <= GARY_COOPER_LIGHT_MAX_DAY_LENGTH)
+		if(_dayLen >= GARY_COOPER_LIGHT_MIN_DAY_LENGTH && _dayLen <= GARY_COOPER_LIGHT_MAX_DAY_LENGTH)
 		{
 			m_minimumDayLength = _dayLen;
 			return telemetry_cmd_response_ack;
@@ -69,7 +67,7 @@ public:
 
 	telemetrycommandResponseT setExtraLightTime(double _elt)
 	{
-		if(_elt >= 0. && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
+		if(_elt >= GARY_COOPER_LIGHT_MIN_EXTRA && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
 		{
 			m_extraLightTime = _elt;
 			return telemetry_cmd_response_ack;

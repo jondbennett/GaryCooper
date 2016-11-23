@@ -42,8 +42,8 @@ CLightController::CLightController()
 	m_lightIsOn = false;
 	m_lastCorrectState = false;
 
-	m_minimumDayLength = CLight_Controller_Minimum_Day_Length;
-	m_extraLightTime = CLight_Controller_Extra_Light_Time;
+	m_minimumDayLength = GARY_COOPER_LIGHT_DEF_DAY_LENGTH;
+	m_extraLightTime = GARY_COOPER_LIGHT_DEF_EXTRA;
 
 	m_morningLightOnTime = CSunCalc_INVALID_TIME;
 	m_morningLightOffTime = CSunCalc_INVALID_TIME;
@@ -61,8 +61,8 @@ void CLightController::saveSettings(CSaveController &_saveController, bool _defa
 	// Save defaults?
 	if(_defaults)
 	{
-		setMinimumDayLength(CLight_Controller_Minimum_Day_Length);
-		setExtraLightTime(CLight_Controller_Extra_Light_Time);
+		setMinimumDayLength(GARY_COOPER_LIGHT_DEF_DAY_LENGTH);
+		setExtraLightTime(GARY_COOPER_LIGHT_DEF_EXTRA);
 	}
 
 	// Save
