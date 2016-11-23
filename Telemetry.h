@@ -75,10 +75,13 @@ public:
 	// Interface for sending data
 	void transmissionStart();
 	void sendTerm(const char *_value);
+
 	void sendTerm(int _value);
 	void sendTerm(unsigned int _value);
+
 	void sendTerm(bool _value);
 	void sendTerm(double _value);
+
 	void transmissionEnd();
 };
 

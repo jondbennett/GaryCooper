@@ -10,6 +10,7 @@
 #include "ICommInterface.h"
 #include "Telemetry.h"
 #include "TelemetryTags.h"
+#include "MilliTimer.h"
 
 #include "Pins.h"
 #include "SunCalc.h"
@@ -117,14 +118,8 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	m_currentTime = hour + (minute / 60.);
 
 	// Get the rise and set times
-	double sunsetTime_naut;
-	double sunriseTime_civil;
-
-	nautical_twilight( year, month, day, lon, lat,
-					   &m_sunriseTime, &sunsetTime_naut);
-
 	civil_twilight( year, month, day, lon, lat,
-					&sunriseTime_civil, &m_sunsetTime);
+					&m_sunriseTime, &m_sunsetTime);
 
 	// Make sure the times make sense
 	normalizeTime(m_sunriseTime);

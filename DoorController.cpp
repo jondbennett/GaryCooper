@@ -10,6 +10,7 @@
 #include "ICommInterface.h"
 #include "TelemetryTags.h"
 #include "Telemetry.h"
+#include "MilliTimer.h"
 
 #include "Pins.h"
 #include "SunCalc.h"
@@ -23,13 +24,13 @@
 ////////////////////////////////////////////////////////////
 CDoorController::CDoorController()
 {
-	m_correctState = doorController_doorStateUnknown;
-	m_commandedState = doorController_doorStateUnknown;
+	m_correctState = doorState_unknown;
+	m_command = (doorCommandE)-1;
 
 	m_sunriseOffset = 0.;
 	m_sunsetOffset = 0.;
 
-	m_stuckDoorMS = 0;
+	m_stuckDoorS = GARY_COOPER_DEF_DOOR_DELAY;
 }
 
 CDoorController::~CDoorController()
@@ -49,11 +50,13 @@ void CDoorController::saveSettings(CSaveController &_saveController, bool _defau
 	{
 		setSunriseOffset(0.);
 		setSunsetOffset(0.);
+		setStuckDoorDelay(GARY_COOPER_DEF_DOOR_DELAY);
 	}
 
 	// Save settings
 	_saveController.writeInt(getSunriseOffset());
 	_saveController.writeInt(getSunsetOffset());
+	_saveController.writeInt(getStuckDoorDelay());
 }
 
 void CDoorController::loadSettings(CSaveController &_saveController)
@@ -65,50 +68,56 @@ void CDoorController::loadSettings(CSaveController &_saveController)
 	int sunsetOffset = _saveController.readInt();
 	setSunsetOffset(sunsetOffset);
 
+	int stuckDoorDelay = _saveController.readInt();
+	setStuckDoorDelay(stuckDoorDelay);
+
 #ifdef DEBUG_DOOR_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CDoorController - sunrise offset is: "));
 	DEBUG_SERIAL.println(getSunriseOffset());
 
 	DEBUG_SERIAL.print(PMS("CDoorController - sunset offset is :"));
 	DEBUG_SERIAL.println(getSunsetOffset());
+
+	DEBUG_SERIAL.print(PMS("CDoorController - stuck door delay :"));
+	DEBUG_SERIAL.println(getStuckDoorDelay());
 	DEBUG_SERIAL.println();
 #endif
 }
 
 void CDoorController::tick()
 {
-	// Let the door motor do its thing
-	if(!getDoorMotor())
-		return;
+	// Tick the door motor
+	if(getDoorMotor())
+		getDoorMotor()->tick();
 
-	getDoorMotor()->tick();
-
-	// See of the door has been commanded to a specific state.
-	// If not then there is nothing to do
-	if(m_commandedState == doorController_doorStateUnknown)
-		return;
-
-	// We have commanded the door to move, so it should soon be
-	// in the correct state
-	if((m_stuckDoorMS > 0) && getDoorMotor()->getDoorState() == m_commandedState)
+	// See if the door is stuck
+	if(m_stuckDoorTimer.getState() == CMilliTimerState_expired)
 	{
-		m_stuckDoorMS = 0;
-#ifdef DEBUG_DOOR_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CDoorController - door motor has reached commanded state... Monitoring ends."));
-#endif
-		reportError(telemetry_error_door_not_responding, false);
-		return;
-	}
+		bool raiseAlarm = false;
+		// Check for failure to open
+		if((m_command == doorCommand_open) &&
+			(getDoorMotor()->getDoorState() != doorState_open))
+		{
+			raiseAlarm = true;
+		}
 
-	// The door has not reached the correct state. Has the
-	// timer timed out?
-	if(m_stuckDoorMS && millis() > m_stuckDoorMS)
-	{
-#ifdef DEBUG_DOOR_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CDoorController - door motor has NOT reached commanded state... Monitoring continues."));
-#endif
-		m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
-		reportError(telemetry_error_door_not_responding, true);
+		// Check for failure to close
+		if((m_command == doorCommand_close) &&
+			(getDoorMotor()->getDoorState() != doorState_closed))
+		{
+			raiseAlarm = true;
+		}
+
+		// Alarm if error
+		if(raiseAlarm)
+		{
+			reportError(telemetry_error_door_motor_unknown_not_responding, true);
+		}
+		else
+		{
+			m_stuckDoorTimer.reset();
+			reportError(telemetry_error_door_motor_unknown_not_responding, false);
+		}
 	}
 }
 
@@ -146,23 +155,18 @@ void CDoorController::checkTime()
 
 	// If the door state is unknown and we are not waiting for it to
 	// move then we have a problem
-	if(m_stuckDoorMS == 0)
+	if(getDoorMotor()->getDoorState() == doorState_unknown)
 	{
-		if(getDoorMotor()->getDoorState() == doorController_doorStateUnknown)
-		{
+
 #ifdef DEBUG_DOOR_CONTROLLER
-			DEBUG_SERIAL.println(PMS("CDoorController - door motor in unknown state."));
+		DEBUG_SERIAL.println(PMS("CDoorController - door motor in unknown state."));
 #endif
-			reportError(telemetry_error_door_motor_unknown_state, true);
-			return;
-		}
-		else
-		{
-#ifdef DEBUG_DOOR_CONTROLLER
-			DEBUG_SERIAL.println(PMS("CDoorController - door motor state OK."));
-#endif
-			reportError(telemetry_error_door_motor_unknown_state, false);
-		}
+		reportError(telemetry_error_door_motor_unknown_state, true);
+		return;
+	}
+	else
+	{
+		reportError(telemetry_error_door_motor_unknown_state, false);
 	}
 
 	// Get the times and keep going
@@ -200,8 +204,8 @@ void CDoorController::checkTime()
 	// then tell the door motor where we want it. That way, if you close the door
 	// early, perhaps the birds have already cooped up, then it won't keep forcing
 	// the door back to open until sunset.
-	doorController_doorStateE newCorrectState =
-		timeIsBetween(current, sunrise, sunset) ? doorController_doorOpen : doorController_doorClosed;
+	doorStateE newCorrectState =
+		timeIsBetween(current, sunrise, sunset) ? doorState_open : doorState_closed;
 
 	if(m_correctState != newCorrectState)
 	{
@@ -212,10 +216,10 @@ void CDoorController::checkTime()
 			g_beepController.beep(BEEP_FREQ_INFO, 500, 500, 2);
 #endif
 		m_correctState = newCorrectState;
-		setDoorState(m_correctState);
+		command((m_correctState == doorState_open) ? doorCommand_open : doorCommand_close);
 
 #ifdef DEBUG_DOOR_CONTROLLER
-		if(m_correctState)
+		if(m_correctState == doorState_open)
 			DEBUG_SERIAL.println(PMS("CDoorController - opening coop door."));
 		else
 			DEBUG_SERIAL.println(PMS("CDoorController - closing coop door."));
@@ -228,12 +232,13 @@ void CDoorController::checkTime()
 	else
 		DEBUG_SERIAL.println(PMS("CDoorController - coop door should be CLOSED."));
 
-	doorController_doorStateE doorState = getDoorMotor()->getDoorState();
+	doorStateE doorState = getDoorMotor()->getDoorState();
 	DEBUG_SERIAL.print(PMS("CDoorController - door motor reports: "));
 
-	DEBUG_SERIAL.println((doorState == doorController_doorOpen) ? PMS("open.") :
-						 (doorState == doorController_doorClosed) ? PMS("closed.") :
-						 (doorState == doorController_doorStateUnknown) ? PMS("UNKNOWN.") :
+	DEBUG_SERIAL.println((doorState == doorState_open) ? PMS("open.") :
+						 (doorState == doorState_closed) ? PMS("closed.") :
+						 (doorState == doorState_moving) ? PMS("moving") :
+						 (doorState == doorState_unknown) ? PMS("UNKNOWN.") :
 						 PMS("*** INVALID ***"));
 	DEBUG_SERIAL.println();
 #endif
@@ -249,6 +254,7 @@ void CDoorController::sendTelemetry()
 	g_telemetry.sendTerm(telemetry_tag_door_config);
 	g_telemetry.sendTerm((int)getSunriseOffset());
 	g_telemetry.sendTerm((int)getSunsetOffset());
+	g_telemetry.sendTerm((int)getStuckDoorDelay());
 	g_telemetry.transmissionEnd();
 
 	// Now, current times and door state
@@ -256,29 +262,35 @@ void CDoorController::sendTelemetry()
 	g_telemetry.sendTerm(telemetry_tag_door_info);
 	g_telemetry.sendTerm(sunrise);
 	g_telemetry.sendTerm(sunset);
-
-	if(m_stuckDoorMS == 0)
-		g_telemetry.sendTerm((int)getDoorMotor()->getDoorState());
-	else
-		g_telemetry.sendTerm((int)m_commandedState);
-
+	g_telemetry.sendTerm((int)getDoorMotor()->getDoorState());
 	g_telemetry.transmissionEnd();
 }
 
-void CDoorController::setDoorState(doorController_doorStateE _state)
+telemetrycommandResponseT CDoorController::command(doorCommandE _command)
 {
-	// Remember the commanded state, no matter who commanded it
-	m_commandedState = _state;
-	if(getDoorMotor()->getDoorState() != m_commandedState)
+	// This had better work
+	if(!getDoorMotor())
 	{
-		getDoorMotor()->setDesiredDoorState(m_commandedState);
-
 #ifdef DEBUG_DOOR_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CDoorController - starting door response monitor."));
+			DEBUG_SERIAL.println(PMS("CDoorController - command - *** NO DOOR MOTOR FOUND ***"));
 #endif
-		m_stuckDoorMS = millis() + CDoorController_Stuck_door_delayMS;
+
+		return telemetry_cmd_response_nak_internal_error;
 	}
 
+	// Remember the command for checking door response
+	m_command = _command;
+
+	telemetrycommandResponseT response = getDoorMotor()->command(_command);
+
+	if(response == telemetry_cmd_response_ack)
+	{
+		m_stuckDoorTimer.reset();
+		unsigned long stuckDoorMS = (unsigned long)(m_stuckDoorS * MILLIS_PER_SECOND);
+		m_stuckDoorTimer.start((unsigned long)stuckDoorMS);
+	}
+
+	return response;
 }
 
 

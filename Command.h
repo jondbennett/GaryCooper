@@ -12,8 +12,8 @@ protected:
 
 	void processCommand(int _tag, double _value);
 
-	void ackCommand(int _tag);
-	void nakCommand(int _tag, telemetrycommandNakT _reason);
+	void ackCommand(int _tag, double _value);
+	void nakCommand(int _tag, double _value, telemetrycommandResponseT _reason);
 
 	void processCommand_V1(int _tag, double _value);
 

@@ -10,6 +10,7 @@
 #include "ICommInterface.h"
 #include "Telemetry.h"
 #include "TelemetryTags.h"
+#include "MilliTimer.h"
 
 #include "Pins.h"
 #include "SunCalc.h"
@@ -39,7 +40,7 @@
 CLightController::CLightController()
 {
 	m_lightIsOn = false;
-	m_lastStatusCheck = false;
+	m_lastCorrectState = false;
 
 	m_minimumDayLength = CLight_Controller_Minimum_Day_Length;
 	m_extraLightTime = CLight_Controller_Extra_Light_Time;
@@ -150,17 +151,17 @@ void CLightController::checkTime()
 	normalizeTime(m_eveningLightOffTime);
 
 	// Check to see if the light status should change
-	bool newStatusCheck;
+	bool newCorrectState;
 	if(currentTime <= midDay)
-		newStatusCheck = timeIsBetween(currentTime, m_morningLightOnTime, m_morningLightOffTime);
+		newCorrectState = timeIsBetween(currentTime, m_morningLightOnTime, m_morningLightOffTime);
 	else
-		newStatusCheck = timeIsBetween(currentTime, m_eveningLightOnTime, m_eveningLightOffTime);
+		newCorrectState = timeIsBetween(currentTime, m_eveningLightOnTime, m_eveningLightOffTime);
 
 	// If the light status should have changed since I last checked
 	// then change the light's state
-	if(newStatusCheck != m_lastStatusCheck)
-		setLightOn(newStatusCheck);
-	m_lastStatusCheck = newStatusCheck;
+	if(newCorrectState != m_lastCorrectState)
+		command(newCorrectState);
+	m_lastCorrectState = newCorrectState;
 
 #ifdef DEBUG_LIGHT_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CLightController - chicken day length is: "));
@@ -188,7 +189,7 @@ void CLightController::checkTime()
 	debugPrintDoubleTime(m_eveningLightOffTime);
 
 	DEBUG_SERIAL.print(PMS("CLightController - Light is currently: "));
-	DEBUG_SERIAL.println((m_lastStatusCheck) ? PMS("ON.") : PMS("OFF."));
+	DEBUG_SERIAL.println((m_lastCorrectState) ? PMS("ON.") : PMS("OFF."));
 #endif
 }
 
@@ -211,7 +212,7 @@ void CLightController::sendTelemetry()
 	g_telemetry.transmissionEnd();
 }
 
-void CLightController::setLightOn(bool _on)
+telemetrycommandResponseT CLightController::command(bool _on)
 {
 
 #ifdef DEBUG_LIGHT_CONTROLLER
@@ -221,4 +222,6 @@ void CLightController::setLightOn(bool _on)
 
 	m_lightIsOn = _on;
 	digitalWrite(PIN_LIGHT_RELAY, m_lightIsOn ? RELAY_ON : RELAY_OFF);
+
+	return telemetry_cmd_response_ack;
 }

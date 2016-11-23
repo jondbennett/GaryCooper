@@ -14,6 +14,7 @@
 #include "SlidingBuf.h"
 #include "Comm_Arduino.h"
 #include "Command.h"
+#include "MilliTimer.h"
 
 #include "Pins.h"
 #include "SunCalc.h"
@@ -48,7 +49,6 @@ static CCommand s_commandProcessor;
 static CComm_Arduino g_telemetryComm;
 
 // Various behavioral delays
-#define MILLIS_PER_SECOND   (1000L)
 
 //#define SECONDS_BETWEEN_UPDATES	(60 * MILLIS_PER_SECOND)
 #define SECONDS_BETWEEN_UPDATES	(5 * MILLIS_PER_SECOND)
@@ -270,7 +270,7 @@ void debugPrintDoubleTime(double _t, bool _newline)
 }
 
 static uint16_t s_errorFlags = 0;
-void reportError(uint16_t _errorTag, bool _set)
+void reportError(telemetryErrorE _errorTag, bool _set)
 {
 	int beepCount = 0;
 
@@ -328,8 +328,8 @@ void reportError(uint16_t _errorTag, bool _set)
 		beepCount = 6;
 		break;
 
-	case telemetry_error_door_not_responding:
-		errorString = PMS("telemetry_error_door_not_responding");
+	case telemetry_error_door_motor_unknown_not_responding:
+		errorString = PMS("telemetry_error_door_motor_unknown_not_responding");
 		beepCount = 7;
 		break;
 

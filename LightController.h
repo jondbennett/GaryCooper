@@ -23,13 +23,13 @@
 // chickens find their way to the coop and get on the perch.
 ////////////////////////////////////////////////////////////
 #define CLight_Controller_Minimum_Day_Length	(0.)	// Minimum day length (hours)
-#define CLight_Controller_Extra_Light_Time		(30.)	// Early light on or off duration (min)
+#define CLight_Controller_Extra_Light_Time		(0.5)	// Early light on or off duration (min)
 
 class CLightController
 {
 protected:
 	bool m_lightIsOn;			// Current on/off status of the light
-	bool m_lastStatusCheck;		// 'Correct' status on last check
+	bool m_lastCorrectState;	// 'Correct' status on last check
 
 	double m_minimumDayLength;
 	double m_extraLightTime;
@@ -51,15 +51,15 @@ public:
 		return m_minimumDayLength;
 	}
 
-	bool setMinimumDayLength(double _dayLen)
+	telemetrycommandResponseT setMinimumDayLength(double _dayLen)
 	{
 		if(_dayLen >= 0. && _dayLen <= GARY_COOPER_LIGHT_MAX_DAY_LENGTH)
 		{
 			m_minimumDayLength = _dayLen;
-			return true;
+			return telemetry_cmd_response_ack;
 		}
 
-		return false;
+		return telemetry_cmd_response_nak_invalid_value;
 	}
 
 	double getExtraLightTime()
@@ -67,15 +67,15 @@ public:
 		return m_extraLightTime;
 	}
 
-	bool setExtraLightTime(double _elt)
+	telemetrycommandResponseT setExtraLightTime(double _elt)
 	{
 		if(_elt >= 0. && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
 		{
 			m_extraLightTime = _elt;
-			return true;
+			return telemetry_cmd_response_ack;
 		}
 
-		return false;
+		return telemetry_cmd_response_nak_invalid_value;
 	}
 
 	void saveSettings(CSaveController &_saveController, bool _defaults);
@@ -84,7 +84,7 @@ public:
 	void checkTime();
 	void sendTelemetry();
 
-	void setLightOn(bool _on);
+	telemetrycommandResponseT command(bool _on);
 };
 
 #endif

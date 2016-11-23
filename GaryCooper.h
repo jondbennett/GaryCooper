@@ -5,7 +5,10 @@
 #define GaryCooper_h
 
 ////////////////////////////////////
+// Config settings for Gary Cooper
 
+// Universal constant
+#define MILLIS_PER_SECOND   (1000L)
 
 //#define DEBUG_RAW_GPS
 #define DEBUG_SUNCALC
@@ -40,6 +43,6 @@ extern CGPSParser g_GPSParser;
 // Utility functions
 void debugPrintDoubleTime(double _t, bool _newline = true);
 
-void reportError(uint16_t _errorTag, bool _set);
+void reportError(telemetryErrorE _errorTag, bool _set);
 void sendErrors();
 #endif

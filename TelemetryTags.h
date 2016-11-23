@@ -8,6 +8,8 @@
 // Telemetry tags sent FROM the coop controller
 typedef enum
 {
+	telemetry_tag_invalue = -2,
+
 	telemetry_tag_error = -1,
 
 	telemetry_tag_version = 0,
@@ -18,7 +20,7 @@ typedef enum
 
 	telemetry_tag_sun_times,	// Sunrise and Sunset times as float (UTC)
 
-	telemetry_tag_door_config,	// Sunrise open and Sunset close offsets
+	telemetry_tag_door_config,	// Sunrise open and Sunset close offsets, stuck door delay
 
 	telemetry_tag_door_info,	// Open time, close time (UTC) float, door state - 0 = closed, 1 = open
 
@@ -34,25 +36,29 @@ typedef enum
 // Reasons that a command could be nak'd
 typedef enum
 {
-	telemetry_cmd_nak_version_not_set = 1,
-	telemetry_cmd_nak_invalid_command,
-	telemetry_cmd_nak_invalid_value,
+	telemetry_cmd_response_ack = 0,
 
-} telemetrycommandNakT;
+	telemetry_cmd_response_nak_version_not_set = 1,
+	telemetry_cmd_response_nak_invalid_command,
+
+	telemetry_cmd_response_nak_invalid_value,
+	telemetry_cmd_response_nak_not_ready,
+	telemetry_cmd_response_nak_internal_error,
+
+} telemetrycommandResponseT;
 
 // Error types sent FROM the coop controller:
 // NOTE: telemetry tag will be telemetry_tag_error
 typedef enum
 {
-	telemetry_error_no_error 						= 0,
-	telemetry_error_GPS_no_data						= (1 << 0),
-	telemetry_error_GPS_bad_data					= (1 << 1),
-	telemetry_error_GPS_not_locked					= (1 << 2),
-	telemetry_error_suncalc_invalid_time			= (1 << 3),
-	telemetry_error_no_door_motor					= (1 << 4),
-	telemetry_error_door_motor_unknown_state		= (1 << 5),
-	telemetry_error_door_not_responding				= (1 << 6),
-
+	telemetry_error_no_error 							= 0,
+	telemetry_error_GPS_no_data							= (1 << 0),
+	telemetry_error_GPS_bad_data						= (1 << 1),
+	telemetry_error_GPS_not_locked						= (1 << 2),
+	telemetry_error_suncalc_invalid_time				= (1 << 3),
+	telemetry_error_no_door_motor						= (1 << 4),
+	telemetry_error_door_motor_unknown_state			= (1 << 5),
+	telemetry_error_door_motor_unknown_not_responding	= (1 << 6),
 } telemetryErrorE;
 
 // Commands sent TO the coop controller
@@ -73,12 +79,35 @@ typedef enum
 }
 telemetryCommandE;
 
-#define GARY_COOPER_DOOR_MAX_TIME_OFFSET	(120)	// Sunrise / sunset +/- two hours in minutes
+// Door related stuff
+typedef enum
+{
+	doorState_unknown = -1,
+	doorState_closed = 0,
+	doorState_open,
+	doorState_moving,
+} doorStateE;
 
+typedef enum
+{
+	doorCommand_close = 0,
+	doorCommand_open,
 
-#define GARY_COOPER_LIGHT_MAX_DAY_LENGTH	(16.)
-#define GARY_COOPER_LIGHT_MAX_EXTRA	(60.)
+} doorCommandE;
 
+// Door controller stuff
+#define GARY_COOPER_DOOR_MAX_TIME_OFFSET (120)	// Sunrise / sunset +/- two hours in minutes
+
+#define GARY_COOPER_MIN_DOOR_DELAY (5L)			// Seconds
+#define GARY_COOPER_DEF_DOOR_DELAY (20L)		// Seconds
+#define GARY_COOPER_MAX_DOOR_DELAY (120L)		// Seconds
+
+// Light controller stuff
+#define GARY_COOPER_LIGHT_MAX_DAY_LENGTH (16.)	// Hours
+#define GARY_COOPER_LIGHT_MAX_EXTRA	(60.)		// Minutes
+
+// Important info
 #define TELEMETRY_BAUD_RATE		(115200)
+
 
 #endif

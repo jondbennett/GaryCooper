@@ -17,7 +17,7 @@ class CSunCalc
 protected:
 
 	double m_currentTime;
-	double m_sunriseTime;	// Nautical
+	double m_sunriseTime;	// Civil
 	double m_sunsetTime;	// Civil
 
 public:

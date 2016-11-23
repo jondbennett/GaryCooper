@@ -8,37 +8,32 @@
 // Use GPS to decide when to open and close the coop door
 ////////////////////////////////////////////////////////////
 
-#define CDoorController_Stuck_door_delayMS	(15000)	// Fifteen seconds should do it
-typedef enum
-{
-	doorController_doorStateUnknown = -1,
-	doorController_doorClosed = 0,
-	doorController_doorOpen,
-} doorController_doorStateE;
-
+// Abstract base class for all door motors. They are simple and stupid.
 class IDoorMotor
 {
 public:
 
 	virtual void setup() = 0;
 
-	virtual void setDesiredDoorState(doorController_doorStateE _doorState) = 0;
-	virtual doorController_doorStateE getDoorState() = 0;
+	virtual telemetrycommandResponseT command(doorCommandE _command) = 0;
+	virtual doorStateE getDoorState() = 0;
 
 	virtual void tick() = 0;
 };
 extern IDoorMotor *getDoorMotor();
 
+// The actual door controller. It is simple and smart.
 class CDoorController
 {
 protected:
-	doorController_doorStateE m_correctState;
-	doorController_doorStateE m_commandedState;
+	doorStateE m_correctState;
+	doorCommandE m_command;
 
 	int  m_sunriseOffset;
 	int  m_sunsetOffset;
 
-	unsigned long m_stuckDoorMS;
+	int m_stuckDoorS;
+	CMilliTimer m_stuckDoorTimer;
 
 public:
 	CDoorController();
@@ -46,20 +41,36 @@ public:
 
 	void setup();
 
+	int getStuckDoorDelay()
+	{
+		return m_stuckDoorS;
+	}
+
+	telemetrycommandResponseT setStuckDoorDelay(int _delay)
+	{
+		if(_delay >= GARY_COOPER_MIN_DOOR_DELAY && _delay <= GARY_COOPER_MAX_DOOR_DELAY)
+		{
+			m_stuckDoorS = _delay;
+			return telemetry_cmd_response_ack;
+		}
+
+		return telemetry_cmd_response_nak_invalid_value;
+	}
+
 	int getSunriseOffset()
 	{
 		return m_sunriseOffset;
 	}
 
-	bool setSunriseOffset(int _sunriseOffset)
+	telemetrycommandResponseT setSunriseOffset(int _sunriseOffset)
 	{
 		if(_sunriseOffset >= -GARY_COOPER_DOOR_MAX_TIME_OFFSET && _sunriseOffset <= GARY_COOPER_DOOR_MAX_TIME_OFFSET)
 		{
 			m_sunriseOffset = _sunriseOffset;
-			return true;
+			return telemetry_cmd_response_ack;
 		}
 
-		return false;
+		return telemetry_cmd_response_nak_invalid_value;
 	}
 
 	int getSunsetOffset()
@@ -67,15 +78,15 @@ public:
 		return m_sunsetOffset;
 	}
 
-	bool setSunsetOffset(int _sunsetOffset)
+	telemetrycommandResponseT setSunsetOffset(int _sunsetOffset)
 	{
 		if(_sunsetOffset >= -GARY_COOPER_DOOR_MAX_TIME_OFFSET && _sunsetOffset <= GARY_COOPER_DOOR_MAX_TIME_OFFSET)
 		{
 			m_sunsetOffset = _sunsetOffset;
-			return true;
+			return telemetry_cmd_response_ack;
 		}
 
-		return false;
+		return telemetry_cmd_response_nak_invalid_value;
 	}
 
 	double getSunriseTime();
@@ -89,7 +100,7 @@ public:
 	void checkTime();
 	void sendTelemetry();
 
-	void setDoorState(doorController_doorStateE _state);
+	telemetrycommandResponseT command(doorCommandE _command);
 };
 
 #endif
