@@ -127,14 +127,14 @@ void CDoorController::tick()
 	}
 }
 
-double CDoorController::getSunriseTime()
+double CDoorController::getDoorOpenTime()
 {
 	double sunrise = g_sunCalc.getSunriseTime() + (getSunriseOffset() / 60.);
 	normalizeTime(sunrise);
 	return sunrise;
 }
 
-double CDoorController::getSunsetTime()
+double CDoorController::getDoorCloseTime()
 {
 	double sunset = g_sunCalc.getSunsetTime() + (getSunsetOffset() / 60.);
 	normalizeTime(sunset);
@@ -176,26 +176,26 @@ void CDoorController::checkTime()
 	}
 
 	// Get the times and keep going
-	double current = g_sunCalc.getCurrentTime();
-	double sunrise = getSunriseTime();
-	double sunset = getSunsetTime();
+	double currentTime = g_sunCalc.getCurrentTime();
+	double doorOpenTime = getDoorOpenTime();
+	double doorCloseTime = getDoorCloseTime();
 
 #ifdef DEBUG_DOOR_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CDoorController - door open from: "));
-	debugPrintDoubleTime(getSunriseTime(), false);
+	debugPrintDoubleTime(doorOpenTime, false);
 	DEBUG_SERIAL.print(PMS(" - "));
-	debugPrintDoubleTime(getSunsetTime(), false);
+	debugPrintDoubleTime(doorCloseTime, false);
 	DEBUG_SERIAL.println(PMS(" (UTC)"));
 #endif
 
 	// Validate the values and report telemetry
-	if(!g_sunCalc.isValidTime(sunrise))
+	if(!g_sunCalc.isValidTime(doorOpenTime))
 	{
 		reportError(telemetry_error_suncalc_invalid_time, true);
 		return;
 	}
 
-	if(!g_sunCalc.isValidTime(sunset))
+	if(!g_sunCalc.isValidTime(doorCloseTime))
 	{
 		reportError(telemetry_error_suncalc_invalid_time, true);
 		return;
@@ -211,7 +211,7 @@ void CDoorController::checkTime()
 	// early, perhaps the birds have already cooped up, then it won't keep forcing
 	// the door back to open until sunset.
 	doorStateE newCorrectState =
-		timeIsBetween(current, sunrise, sunset) ? doorState_open : doorState_closed;
+		timeIsBetween(currentTime, doorOpenTime, doorCloseTime) ? doorState_open : doorState_closed;
 
 	if(m_correctState != newCorrectState)
 	{
@@ -252,8 +252,8 @@ void CDoorController::checkTime()
 
 void CDoorController::sendTelemetry()
 {
-	double sunrise = getSunriseTime();
-	double sunset = getSunsetTime();
+	double doorOpenTime = getDoorOpenTime();
+	double doorCloseTime = getDoorCloseTime();
 
 	// Update telemetry starting with config info
 	g_telemetry.transmissionStart();
@@ -266,8 +266,8 @@ void CDoorController::sendTelemetry()
 	// Now, current times and door state
 	g_telemetry.transmissionStart();
 	g_telemetry.sendTerm(telemetry_tag_door_info);
-	g_telemetry.sendTerm(sunrise);
-	g_telemetry.sendTerm(sunset);
+	g_telemetry.sendTerm(doorOpenTime);
+	g_telemetry.sendTerm(doorCloseTime);
 	g_telemetry.sendTerm((int)getDoorMotor()->getDoorState());
 	g_telemetry.transmissionEnd();
 }

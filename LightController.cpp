@@ -106,8 +106,8 @@ void CLightController::checkTime()
 	if(CSunCalc_INVALID_TIME == currentTime) return;
 
 	// Figure out when the door opens and closes
-	double doorOpenTime = g_doorController.getSunriseTime();
-	double doorCloseTime = g_doorController.getSunsetTime();
+	double doorOpenTime = g_doorController.getDoorOpenTime();
+	double doorCloseTime = g_doorController.getDoorCloseTime();
 
 	// Make sure the door times are valid
 	if((CSunCalc_INVALID_TIME == doorOpenTime) ||

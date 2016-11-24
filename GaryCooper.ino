@@ -49,15 +49,15 @@ static CCommand s_commandProcessor;
 static CComm_Arduino g_telemetryComm;
 
 // Various behavioral delays
-
-//#define SECONDS_BETWEEN_UPDATES	(60 * MILLIS_PER_SECOND)
-#define SECONDS_BETWEEN_UPDATES	(5 * MILLIS_PER_SECOND)
+#define TIME_CHECK_UPDATE_NO_GPS_LOCK	(5 * MILLIS_PER_SECOND)
+#define TIME_CHECK_UPDATE_GPS_LOCK		(60 * MILLIS_PER_SECOND)
+CMilliTimer g_timeCheckTimer;
 
 // Frequency of telemetry transmission
-#define TELEMETRY_DELAY	(1 * MILLIS_PER_SECOND)
+#define TELEMETRY_UPDATE	(2 * MILLIS_PER_SECOND)
+CMilliTimer g_telemetryUpdateTimer;
 
-unsigned long g_timer;
-unsigned long g_telemetryMS;
+// Flashing the LED
 bool g_heartbeat = false;
 
 void saveSettings(bool _defaults)
@@ -130,7 +130,6 @@ void setup()
 {
 	// Setup heartbeat indicator
 	pinMode(PIN_HEARTBEAT_LED, OUTPUT);
-	g_telemetryMS = millis() + MILLIS_PER_SECOND;
 
 	// Prep debug port
 	DEBUG_SERIAL.begin(DEBUG_BAUD_RATE);
@@ -152,10 +151,13 @@ void setup()
 	g_beepController.setup();
 	g_beepController.beep(BEEP_FREQ_INFO, 50, 50, 2);
 
+	// Telemetry updates every two seconds
+	g_telemetryUpdateTimer.start(TELEMETRY_UPDATE);
+
 	// Prep the update timer. This delay
 	// allows the GPS to get some data before we start
 	// processing more slowly
-	g_timer = millis() + (MILLIS_PER_SECOND * 5);
+	g_timeCheckTimer.start(TIME_CHECK_UPDATE_NO_GPS_LOCK);
 }
 
 void loop()
@@ -166,39 +168,6 @@ void loop()
 		loadSettings();
 		settingsLoaded = true;
 	}
-
-	// Send telemetry
-	if(millis() > g_telemetryMS)
-	{
-		// Blink the LED
-		g_heartbeat = !g_heartbeat;
-		digitalWrite(PIN_HEARTBEAT_LED, g_heartbeat);
-		g_telemetryMS = millis() + TELEMETRY_DELAY;
-
-		// Send telemetry version number
-		g_telemetry.transmissionStart();
-		g_telemetry.sendTerm(telemetry_tag_version);
-		g_telemetry.sendTerm(TELEMETRY_VERSION_01);
-		g_telemetry.transmissionEnd();
-
-		// Send standing errors
-		sendErrors();
-
-		// And the rest of the telemetry
-		g_sunCalc.sendTelemetry();
-		g_doorController.sendTelemetry();
-		g_lightController.sendTelemetry();
-	}
-
-	// Let the telemetry module process serial data
-	g_telemetryComm.tick();
-	g_telemetry.tick();
-
-	// Let the door controller time its relay
-	g_doorController.tick();
-
-	// Let the beep controller run
-	g_beepController.tick();
 
 	// Process all available GPS data
 	while(GPS_SERIAL.available())
@@ -228,13 +197,52 @@ void loop()
 		}
 	}
 
+	// Send telemetry
+	if(g_telemetryUpdateTimer.getState() == CMilliTimerState_expired)
+	{
+		// Blink the LED
+		g_heartbeat = !g_heartbeat;
+		digitalWrite(PIN_HEARTBEAT_LED, g_heartbeat);
+
+		// Reset the timer
+		g_telemetryUpdateTimer.start(TELEMETRY_UPDATE);
+
+		// Send telemetry version number
+		g_telemetry.transmissionStart();
+		g_telemetry.sendTerm(telemetry_tag_version);
+		g_telemetry.sendTerm(TELEMETRY_VERSION_01);
+		g_telemetry.transmissionEnd();
+
+		// Send standing errors
+		sendErrors();
+
+		// And the rest of the telemetry
+		g_sunCalc.sendTelemetry();
+		g_doorController.sendTelemetry();
+		g_lightController.sendTelemetry();
+	}
+
+	// Let the telemetry module process serial data
+	g_telemetryComm.tick();
+	g_telemetry.tick();
+
+	// Let the door controller time its relay
+	g_doorController.tick();
+
+	// Let the beep controller run
+	g_beepController.tick();
+
 	// If the update timer has completed then
 	// read the GPS data and check the time to
 	// see if anything needs to be done
-	if(millis() >= g_timer)
+	if(g_timeCheckTimer.getState() == CMilliTimerState_expired)
 	{
 		// Prep for next update
-		g_timer = millis() + SECONDS_BETWEEN_UPDATES;
+		if(g_GPSParser.getGPSData().m_GPSLocked)
+			g_timeCheckTimer.start(TIME_CHECK_UPDATE_GPS_LOCK);
+		else
+			g_timeCheckTimer.start(TIME_CHECK_UPDATE_NO_GPS_LOCK);
+
 
 		// If the GPS is not sending any data then report an error
 		if(!s_gpsDataStreamActive)

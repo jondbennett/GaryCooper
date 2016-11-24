@@ -89,8 +89,8 @@ public:
 		return telemetry_cmd_response_nak_invalid_value;
 	}
 
-	double getSunriseTime();
-	double getSunsetTime();
+	double getDoorOpenTime();
+	double getDoorCloseTime();
 
 	void saveSettings(CSaveController &_saveController, bool _defaults);
 	void loadSettings(CSaveController &_saveController);
