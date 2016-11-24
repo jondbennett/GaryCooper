@@ -90,7 +90,13 @@ void CDoorController::tick()
 	if(getDoorMotor())
 		getDoorMotor()->tick();
 
-	// See if the door is stuck
+	// OK, there is a race condition here. If the door is commanded
+	// to a different state, reaches that state, and then is
+	// * spontaneously * returned to the original state before this
+	// timer expires then a false failure will be reported.
+	// I'm not interested in fixing it.
+
+	// Check to see if the door is stuck
 	if(m_stuckDoorTimer.getState() == CMilliTimerState_expired)
 	{
 		bool raiseAlarm = false;
@@ -277,6 +283,10 @@ telemetrycommandResponseT CDoorController::command(doorCommandE _command)
 
 		return telemetry_cmd_response_nak_internal_error;
 	}
+
+	// Only accept valid commands
+	if((_command != doorCommand_open) && (_command != doorCommand_close))
+		return telemetry_cmd_response_nak_invalid_value;
 
 	// Remember the command for checking door response
 	m_command = _command;

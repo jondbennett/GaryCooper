@@ -34,7 +34,7 @@ void CCommand::startReception()
 #ifdef DEBUG_COMMAND_PROCESSOR_INTERFACE
 	DEBUG_SERIAL.println(PMS("CCommand - Command Starting"));
 #endif
-	m_term0 = telemetry_tag_invalue;
+	m_term0 = telemetry_tag_invalid;
 	m_term1 = 0.;
 }
 
@@ -95,7 +95,7 @@ void CCommand::processCommand(int _tag, double _value)
 		if(_value == 1.)
 		{
 			m_version = TELEMETRY_VERSION_01;
-			ackCommand(_tag, 0.);
+			ackCommand(_tag, _value);
 		}
 	}
 	else
@@ -121,6 +121,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 	int sunriseOffset = (int)_value;
 	int sunsetOffset = (int)_value;
 	bool lightOn = (_value > 0.) ? true : false;
+	int stuckDoorDelay = (int) _value;
 	doorCommandE doorCommand = (_value > 0.)? doorCommand_open : doorCommand_close;
 
 	telemetrycommandResponseT commandResponse;
@@ -218,12 +219,30 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_forceLight:
 #ifdef DEBUG_COMMAND_PROCESSOR
-			DEBUG_SERIAL.print(PMS("CCommand - force light command: "));
+		DEBUG_SERIAL.print(PMS("CCommand - force light command: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		commandResponse = g_lightController.command(lightOn);
 		if(commandResponse == telemetry_cmd_response_ack)
 		{
+			ackCommand(_tag, _value);
+		}
+		else
+		{
+			nakCommand(_tag, _value, commandResponse);
+		}
+		break;
+
+	case telemetry_command_setStuckDoorDelay:
+#ifdef DEBUG_COMMAND_PROCESSOR
+		DEBUG_SERIAL.print(PMS("CCommand - set stuck door delay: "));
+		DEBUG_SERIAL.println(_value);
+#endif
+		commandResponse = g_doorController.setStuckDoorDelay(stuckDoorDelay);
+		if(commandResponse == telemetry_cmd_response_ack)
+		{
+			saveSettings();
+			loadSettings();
 			ackCommand(_tag, _value);
 		}
 		else
@@ -256,28 +275,32 @@ void CCommand::processCommand_V1(int _tag, double _value)
 void CCommand::ackCommand(int _tag, double _value)
 {
 #ifdef DEBUG_COMMAND_PROCESSOR
-			DEBUG_SERIAL.print(PMS("CCommand - acking: "));
-			DEBUG_SERIAL.println(_tag);
+		DEBUG_SERIAL.print(PMS("CCommand - acking Tag: "));
+		DEBUG_SERIAL.print(_tag);
+		DEBUG_SERIAL.print(PMS("  Value: "));
+		DEBUG_SERIAL.println(_value);
 #endif
 	g_telemetry.transmissionStart();
 	g_telemetry.sendTerm(telemetry_tag_command_ack);
-	g_telemetry.sendTerm(_tag);
-	g_telemetry.sendTerm(_value);
+	g_telemetry.sendTerm((int)_tag);
+	g_telemetry.sendTerm((double)_value);
 	g_telemetry.transmissionEnd();
 }
 
 void CCommand::nakCommand(int _tag, double _value, telemetrycommandResponseT _reason)
 {
 #ifdef DEBUG_COMMAND_PROCESSOR
-			DEBUG_SERIAL.print(PMS("CCommand - *** NAKing: "));
-			DEBUG_SERIAL.print(_tag);
-			DEBUG_SERIAL.print(PMS(" reason: "));
-			DEBUG_SERIAL.println(_reason);
+		DEBUG_SERIAL.print(PMS("CCommand - *** Nacking Tag: "));
+		DEBUG_SERIAL.print(_tag);
+		DEBUG_SERIAL.print(PMS("  Value: "));
+		DEBUG_SERIAL.print(_value);
+		DEBUG_SERIAL.print(PMS("  Reason: "));
+		DEBUG_SERIAL.println(_reason);
 #endif
 	g_telemetry.transmissionStart();
 	g_telemetry.sendTerm(telemetry_tag_command_nak);
-	g_telemetry.sendTerm(_tag);
-	g_telemetry.sendTerm(_value);
-	g_telemetry.sendTerm(_reason);
+	g_telemetry.sendTerm((int)_tag);
+	g_telemetry.sendTerm((double)_value);
+	g_telemetry.sendTerm((int)_reason);
 	g_telemetry.transmissionEnd();
 }

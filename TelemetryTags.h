@@ -8,11 +8,11 @@
 // Telemetry tags sent FROM the coop controller
 typedef enum
 {
-	telemetry_tag_invalue = -2,
+	telemetry_tag_invalid = -1,
 
-	telemetry_tag_error = -1,
+	telemetry_tag_version,		// Telemetry version number
 
-	telemetry_tag_version = 0,
+	telemetry_tag_error_flags,	// Encoded errors (telemetryErrorE)
 
 	telemetry_tag_GPSStatus,	// Lock, nSats, lat, lon
 
@@ -71,6 +71,8 @@ typedef enum
 	telemetry_command_forceDoor,
 	telemetry_command_forceLight,
 
+	telemetry_command_setStuckDoorDelay,
+
 	telemetry_command_loadDefaults
 }
 telemetryCommandE;
@@ -88,7 +90,7 @@ typedef enum
 {
 	telemetry_cmd_response_ack = 0,
 
-	telemetry_cmd_response_nak_version_not_set = 1,
+	telemetry_cmd_response_nak_version_not_set,
 	telemetry_cmd_response_nak_invalid_command,
 
 	telemetry_cmd_response_nak_invalid_value,
@@ -105,7 +107,7 @@ typedef enum
 #define GARY_COOPER_MAX_DOOR_DELAY (120L)		// Seconds
 
 // Light controller stuff
-#define GARY_COOPER_LIGHT_MIN_DAY_LENGTH (16.0)	// Hours
+#define GARY_COOPER_LIGHT_MIN_DAY_LENGTH (0.0)	// Hours
 #define GARY_COOPER_LIGHT_MAX_DAY_LENGTH (16.0)	// Hours
 #define GARY_COOPER_LIGHT_DEF_DAY_LENGTH (0.0)	// Hours
 
@@ -115,6 +117,5 @@ typedef enum
 
 // Important info
 #define TELEMETRY_BAUD_RATE		(115200)
-
 
 #endif

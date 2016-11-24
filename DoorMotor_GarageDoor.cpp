@@ -73,6 +73,9 @@ telemetrycommandResponseT CDoorMotor_GarrageDoor::command(doorCommandE _command)
 						 PMS("*** INVALID ***"));
 #endif
 
+	if((_command != doorCommand_open) && (_command != doorCommand_close))
+		return telemetry_cmd_response_nak_invalid_value;
+
 	// Very special case at startup when coop door should be open
 	if(m_seekingKnownState)
 	{

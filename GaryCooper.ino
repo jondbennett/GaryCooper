@@ -359,7 +359,7 @@ void reportError(telemetryErrorE _errorTag, bool _set)
 void sendErrors()
 {
 	g_telemetry.transmissionStart();
-	g_telemetry.sendTerm(telemetry_tag_error);
+	g_telemetry.sendTerm(telemetry_tag_error_flags);
 	g_telemetry.sendTerm(s_errorFlags);
 	g_telemetry.transmissionEnd();
 }

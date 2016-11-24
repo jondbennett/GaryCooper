@@ -188,8 +188,11 @@ void CLightController::checkTime()
 	DEBUG_SERIAL.print(PMS(" - "));
 	debugPrintDoubleTime(m_eveningLightOffTime);
 
-	DEBUG_SERIAL.print(PMS("CLightController - Light is currently: "));
+	DEBUG_SERIAL.print(PMS("CLightController - light should be: "));
 	DEBUG_SERIAL.println((m_lastCorrectState) ? PMS("ON.") : PMS("OFF."));
+
+	DEBUG_SERIAL.print(PMS("CLightController - light is currently: "));
+	DEBUG_SERIAL.println((m_lightIsOn) ? PMS("on.") : PMS("off."));
 #endif
 }
 
