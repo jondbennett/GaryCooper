@@ -12,6 +12,7 @@
 // is represented as 11.75, and so on.
 ////////////////////////////////////////////////////////////
 #define CSunCalc_INVALID_TIME	(-999)
+
 class CSunCalc
 {
 protected:

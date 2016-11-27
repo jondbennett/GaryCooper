@@ -27,7 +27,7 @@
 
 // The data version for tracking the settings,
 // and the settings functions
-#define GARYCOOPER_DATA_VERSION	(1)
+#define GARYCOOPER_DATA_VERSION	(2)
 extern void loadSettings();
 extern void saveSettings(bool _defaults = false);
 
@@ -38,7 +38,6 @@ extern CLightController g_lightController;
 extern CBeepController g_beepController;
 extern CSunCalc g_sunCalc;
 extern CSaveController g_saveController;
-extern CGPSParser g_GPSParser;
 
 // Utility functions
 void debugPrintDoubleTime(double _t, bool _newline = true);

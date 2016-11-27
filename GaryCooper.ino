@@ -197,6 +197,16 @@ void loop()
 		}
 	}
 
+	// Let the telemetry module process serial data
+	g_telemetryComm.tick();
+	g_telemetry.tick();
+
+	// Let the beep controller run
+	g_beepController.tick();
+
+	// Let the door controller time its relay
+	g_doorController.tick();
+
 	// Send telemetry
 	if(g_telemetryUpdateTimer.getState() == CMilliTimerState_expired)
 	{
@@ -221,16 +231,6 @@ void loop()
 		g_doorController.sendTelemetry();
 		g_lightController.sendTelemetry();
 	}
-
-	// Let the telemetry module process serial data
-	g_telemetryComm.tick();
-	g_telemetry.tick();
-
-	// Let the door controller time its relay
-	g_doorController.tick();
-
-	// Let the beep controller run
-	g_beepController.tick();
 
 	// If the update timer has completed then
 	// read the GPS data and check the time to

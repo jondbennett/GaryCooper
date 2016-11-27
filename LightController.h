@@ -30,7 +30,9 @@ protected:
 	bool m_lastCorrectState;	// 'Correct' status on last check
 
 	double m_minimumDayLength;
-	double m_extraLightTime;
+
+	double m_extraLightTimeMorning;
+	double m_extraLightTimeEvening;
 
 	double m_morningLightOnTime;
 	double m_morningLightOffTime;
@@ -60,16 +62,34 @@ public:
 		return telemetry_cmd_response_nak_invalid_value;
 	}
 
-	double getExtraLightTime()
+	double getExtraLightTimeMorning()
 	{
-		return m_extraLightTime;
+		return m_extraLightTimeMorning;
 	}
 
-	telemetrycommandResponseT setExtraLightTime(double _elt)
+
+	double getExtraLightTimeEvening()
+	{
+		return m_extraLightTimeEvening;
+	}
+
+	telemetrycommandResponseT setExtraLightTimeMorning(double _elt)
 	{
 		if(_elt >= GARY_COOPER_LIGHT_MIN_EXTRA && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
 		{
-			m_extraLightTime = _elt;
+			m_extraLightTimeMorning = _elt;
+			return telemetry_cmd_response_ack;
+		}
+
+		return telemetry_cmd_response_nak_invalid_value;
+	}
+
+
+	telemetrycommandResponseT setExtraLightTimeEvening(double _elt)
+	{
+		if(_elt >= GARY_COOPER_LIGHT_MIN_EXTRA && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
+		{
+			m_extraLightTimeEvening = _elt;
 			return telemetry_cmd_response_ack;
 		}
 

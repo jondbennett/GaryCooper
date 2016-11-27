@@ -24,7 +24,7 @@ typedef enum
 
 	telemetry_tag_door_info,	// Open time, close time (UTC) float, door state
 
-	telemetry_tag_light_config,	// min day length, extra illumination time
+	telemetry_tag_light_config,	// min day length, morning/evening extra illumination times
 
 	telemetry_tag_light_info,	// Morning on / off times , evening on / off times,, state - 0 = off, 1 = on
 
@@ -66,7 +66,9 @@ typedef enum
 	telemetry_command_setSunsetOffset,
 
 	telemetry_command_setMinimumDayLength,
-	telemetry_command_setExtraIllumination,
+
+	telemetry_command_setExtraIlluminationMorning,
+	telemetry_command_setExtraIlluminationEvening,
 
 	telemetry_command_forceDoor,
 	telemetry_command_forceLight,

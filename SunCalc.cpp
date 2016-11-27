@@ -20,6 +20,8 @@
 #include "BeepController.h"
 #include "GaryCooper.h"
 
+extern CGPSParser g_GPSParser;
+
 ////////////////////////////////////////////////////////////
 // Use GPS data to calculate sunrise, sunset, and current times.
 // Times are in UTC and represented as float with hour in the
@@ -142,6 +144,8 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 
 void CSunCalc::sendTelemetry()
 {
+	const char *emptyS = PMS("");
+
 	// Telemetry
 	CGPSParserData gpsData = g_GPSParser.getGPSData();
 
@@ -156,19 +160,28 @@ void CSunCalc::sendTelemetry()
 	}
 	else
 	{
-		const char *empty = PMS("");
-		g_telemetry.sendTerm(empty);
-		g_telemetry.sendTerm(empty);
-		g_telemetry.sendTerm(empty);
+		g_telemetry.sendTerm(emptyS);
+		g_telemetry.sendTerm(emptyS);
+		g_telemetry.sendTerm(emptyS);
 	}
 	g_telemetry.transmissionEnd();
 
 	g_telemetry.transmissionStart();
 	g_telemetry.sendTerm(telemetry_tag_date_time);
-	g_telemetry.sendTerm(gpsData.m_date.m_year);
-	g_telemetry.sendTerm(gpsData.m_date.m_month);
-	g_telemetry.sendTerm(gpsData.m_date.m_day);
-	g_telemetry.sendTerm(m_currentTime);
+	if(gpsData.m_GPSLocked)
+	{
+		g_telemetry.sendTerm(gpsData.m_date.m_year);
+		g_telemetry.sendTerm(gpsData.m_date.m_month);
+		g_telemetry.sendTerm(gpsData.m_date.m_day);
+		g_telemetry.sendTerm(m_currentTime);
+	}
+	else
+	{
+		g_telemetry.sendTerm(emptyS);
+		g_telemetry.sendTerm(emptyS);
+		g_telemetry.sendTerm(emptyS);
+		g_telemetry.sendTerm(emptyS);
+	}
 	g_telemetry.transmissionEnd();
 
 	g_telemetry.transmissionStart();
@@ -201,7 +214,6 @@ bool timeIsBetween(double _currentTime, double _first, double _second)
 			return false;
 	}
 }
-
 
 // Deal with rolling to the next day
 void normalizeTime(double &_t)

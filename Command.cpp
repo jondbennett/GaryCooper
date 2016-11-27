@@ -139,7 +139,10 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		{
 			saveSettings();
 			loadSettings();
+
 			ackCommand(_tag, _value);
+
+			g_doorController.checkTime();
 		}
 		else
 		{
@@ -157,7 +160,10 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		{
 			saveSettings();
 			loadSettings();
+
 			ackCommand(_tag, _value);
+
+			g_doorController.checkTime();
 		}
 		else
 		{
@@ -175,7 +181,10 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		{
 			saveSettings();
 			loadSettings();
+
 			ackCommand(_tag, _value);
+
+			g_lightController.checkTime();
 		}
 		else
 		{
@@ -183,17 +192,41 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		}
 		break;
 
-	case telemetry_command_setExtraIllumination:
+	case telemetry_command_setExtraIlluminationMorning:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - setExtraLightTime: "));
+		DEBUG_SERIAL.print(PMS("CCommand - setExtraLightTimeMorning: "));
 		DEBUG_SERIAL.println(_value);
 #endif
-		commandResponse = g_lightController.setExtraLightTime(_value);
+		commandResponse = g_lightController.setExtraLightTimeMorning(_value);
 		if(commandResponse == telemetry_cmd_response_ack)
 		{
 			saveSettings();
 			loadSettings();
+
 			ackCommand(_tag, _value);
+
+			g_lightController.checkTime();
+		}
+		else
+		{
+			nakCommand(_tag, _value, commandResponse);
+		}
+		break;
+
+		case telemetry_command_setExtraIlluminationEvening:
+#ifdef DEBUG_COMMAND_PROCESSOR
+		DEBUG_SERIAL.print(PMS("CCommand - setExtraLightTimeEvening: "));
+		DEBUG_SERIAL.println(_value);
+#endif
+		commandResponse = g_lightController.setExtraLightTimeEvening(_value);
+		if(commandResponse == telemetry_cmd_response_ack)
+		{
+			saveSettings();
+			loadSettings();
+
+			ackCommand(_tag, _value);
+
+			g_lightController.checkTime();
 		}
 		else
 		{

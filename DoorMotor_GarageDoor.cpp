@@ -158,6 +158,7 @@ void CDoorMotor_GarrageDoor::tick()
 		m_relayTimer.reset();
 		digitalWrite(PIN_DOOR_RELAY, RELAY_OFF);
 	}
+
 	///////////////////////////////////////////////////////////////////////
 	// If I have not checked my initial state then do it now.
 	if(m_seekingKnownState)

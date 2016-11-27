@@ -43,7 +43,9 @@ CLightController::CLightController()
 	m_lastCorrectState = false;
 
 	m_minimumDayLength = GARY_COOPER_LIGHT_DEF_DAY_LENGTH;
-	m_extraLightTime = GARY_COOPER_LIGHT_DEF_EXTRA;
+
+	m_extraLightTimeMorning = GARY_COOPER_LIGHT_DEF_EXTRA;
+	m_extraLightTimeEvening = GARY_COOPER_LIGHT_DEF_EXTRA;
 
 	m_morningLightOnTime = CSunCalc_INVALID_TIME;
 	m_morningLightOffTime = CSunCalc_INVALID_TIME;
@@ -62,26 +64,33 @@ void CLightController::saveSettings(CSaveController &_saveController, bool _defa
 	if(_defaults)
 	{
 		setMinimumDayLength(GARY_COOPER_LIGHT_DEF_DAY_LENGTH);
-		setExtraLightTime(GARY_COOPER_LIGHT_DEF_EXTRA);
+		setExtraLightTimeMorning(GARY_COOPER_LIGHT_DEF_EXTRA);
+		setExtraLightTimeEvening(GARY_COOPER_LIGHT_DEF_EXTRA);
 	}
 
 	// Save
 	_saveController.writeDouble(getMinimumDayLength());
-	_saveController.writeDouble(getExtraLightTime());
+	_saveController.writeDouble(getExtraLightTimeMorning());
+	_saveController.writeDouble(getExtraLightTimeEvening());
 }
 
 void CLightController::loadSettings(CSaveController &_saveController)
 {
 	// Load
 	setMinimumDayLength(_saveController.readDouble());
-	setExtraLightTime(_saveController.readDouble());
+	setExtraLightTimeMorning(_saveController.readDouble());
+	setExtraLightTimeEvening(_saveController.readDouble());
 
 #ifdef DEBUG_LIGHT_CONTROLLER
 	DEBUG_SERIAL.print(PMS("CLightController - minimum day length is: "));
 	DEBUG_SERIAL.println(getMinimumDayLength());
 
-	DEBUG_SERIAL.print(PMS("CLightController - extra light time is: "));
-	DEBUG_SERIAL.println(getExtraLightTime());
+	DEBUG_SERIAL.print(PMS("CLightController - morning extra light time is: "));
+	DEBUG_SERIAL.println(getExtraLightTimeMorning());
+
+	DEBUG_SERIAL.print(PMS("CLightController - evening extra light time is: "));
+	DEBUG_SERIAL.println(getExtraLightTimeEvening());
+
 #endif
 }
 
@@ -140,10 +149,10 @@ void CLightController::checkTime()
 						   : doorOpenTime;
 	normalizeTime(m_morningLightOnTime);
 
-	m_morningLightOffTime = doorOpenTime + m_extraLightTime;
+	m_morningLightOffTime = doorOpenTime + m_extraLightTimeMorning;
 	normalizeTime(m_morningLightOffTime);
 
-	m_eveningLightOnTime = doorCloseTime - m_extraLightTime;
+	m_eveningLightOnTime = doorCloseTime - m_extraLightTimeEvening;
 	normalizeTime(m_eveningLightOnTime);
 
 	m_eveningLightOffTime = (supplementalIllumination) ? midDay + halfIlluminationTime
@@ -202,7 +211,8 @@ void CLightController::sendTelemetry()
 	g_telemetry.transmissionStart();
 	g_telemetry.sendTerm(telemetry_tag_light_config);
 	g_telemetry.sendTerm(getMinimumDayLength());
-	g_telemetry.sendTerm(getExtraLightTime());
+	g_telemetry.sendTerm(getExtraLightTimeMorning());
+	g_telemetry.sendTerm(getExtraLightTimeEvening());
 	g_telemetry.transmissionEnd();
 
 	g_telemetry.transmissionStart();
