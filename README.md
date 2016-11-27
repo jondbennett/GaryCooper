@@ -31,7 +31,7 @@ A door controller object monitors the current time relative to the sunrise and s
 
 There is another object that controls the coop light. It monitors the chicken's day length and decides if the light should be turned on early and left on late. This object also provides additional light after the door is opened in the morning to help the chickens get their day started, and turns it on before the door closes in the evening to draw them back to the coop. The light is off most of the day.
 
-Finally, status and error information is transmitted back to the house. The status info lets us know when the door opens and closes, and when the light is on. The error information is to alert us to gps lock problems, the door being stuck, and such things.
+Status and error information is transmitted back to the house. The status info lets us know when the door opens and closes, and when the light is on. The error information is to alert us to gps lock problems, the door being stuck, and such things. I have another repository here - its name is Veronica. Veronica is a wxWidgets application that runs in the house. It provides voice notification of various coop events and error/warning notifications. It can also send configuration changes back to Gary to alter the door and light schedule, or to remotely open/close the door or turn the light on and off.
 
 This project depends on my GPSParser, PMS, and SaveController libraries, so you'll need to download them as well.
 
