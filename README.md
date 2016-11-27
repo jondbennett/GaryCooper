@@ -33,6 +33,8 @@ There is another object that controls the coop light. It monitors the chicken's 
 
 Status and error information is transmitted back to the house. The status info lets us know when the door opens and closes, and when the light is on. The error information is to alert us to gps lock problems, the door being stuck, and such things. I have another repository here - its name is Veronica. Veronica is a wxWidgets application that runs in the house. It provides voice notification of various coop events and error/warning notifications. It can also send configuration changes back to Gary to alter the door and light schedule, or to remotely open/close the door or turn the light on and off.
 
+See the implementation photos here: http://jondbennett.com/photo-galleries/52-garycooper-chicken-coop-door-controller
+
 This project depends on my GPSParser, PMS, and SaveController libraries, so you'll need to download them as well.
 
 The files "sunriset.h" and "sunriset.cpp" were downloaded as-is from the:
