@@ -121,7 +121,7 @@ void CLightController::checkTime()
 	// Make sure the door times are valid
 	if((CSunCalc_INVALID_TIME == doorOpenTime) ||
 			(CSunCalc_INVALID_TIME == doorCloseTime))
-			return;
+		return;
 
 	// Find mid day for the chickens
 	double midDay = doorOpenTime + ((doorCloseTime - doorOpenTime) / 2.);

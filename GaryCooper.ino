@@ -73,7 +73,7 @@ void saveSettings(bool _defaults)
 
 	// Save everything
 	g_doorController.saveSettings(g_saveController, _defaults);
-	g_lightController.saveSettings(g_saveController , _defaults);
+	g_lightController.saveSettings(g_saveController, _defaults);
 
 #ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.println(PMS("complete."));

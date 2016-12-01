@@ -37,23 +37,23 @@ typedef enum
 ////////////////////////////////////////////////////////////
 IDoorMotor *getDoorMotor()
 {
-	static CDoorMotor_GarageDoor s_doorMotor;
+	static CDoorMotor_GarrageDoor s_doorMotor;
 	return &s_doorMotor;
 }
 
-CDoorMotor_GarageDoor::CDoorMotor_GarageDoor()
+CDoorMotor_GarrageDoor::CDoorMotor_GarrageDoor()
 {
 	m_seekingKnownState = true;
 	m_state = doorState_unknown;
 	m_lastCommand = (doorCommandE) - 1;
 }
 
-CDoorMotor_GarageDoor::~CDoorMotor_GarageDoor()
+CDoorMotor_GarrageDoor::~CDoorMotor_GarrageDoor()
 {
 
 }
 
-void CDoorMotor_GarageDoor::setup()
+void CDoorMotor_GarrageDoor::setup()
 {
 	// Setup the door relay
 	pinMode(PIN_DOOR_RELAY, OUTPUT);
@@ -64,10 +64,10 @@ void CDoorMotor_GarageDoor::setup()
 	pinMode(PIN_DOOR_CLOSED_SWITCH, INPUT_PULLUP);
 }
 
-telemetrycommandResponseT CDoorMotor_GarageDoor::command(doorCommandE _command)
+telemetrycommandResponseT CDoorMotor_GarrageDoor::command(doorCommandE _command)
 {
 #ifdef DEBUG_DOOR_MOTOR
-	DEBUG_SERIAL.print(PMS("CDoorMotor_GarageDoor - command door: "));
+	DEBUG_SERIAL.print(PMS("CDoorMotor_GarrageDoor - command door: "));
 	DEBUG_SERIAL.println((_command == doorCommand_open) ? PMS("open.") :
 						 (_command == doorCommand_close) ? PMS("close.") :
 						 PMS("*** INVALID ***"));
@@ -80,7 +80,7 @@ telemetrycommandResponseT CDoorMotor_GarageDoor::command(doorCommandE _command)
 	if(m_seekingKnownState)
 	{
 #ifdef DEBUG_DOOR_MOTOR
-		DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - received command while seeking known state. Command delayed."));
+		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - received command while seeking known state. Command delayed."));
 #endif
 		m_lastCommand = _command;
 		return telemetry_cmd_response_ack;
@@ -90,7 +90,7 @@ telemetrycommandResponseT CDoorMotor_GarageDoor::command(doorCommandE _command)
 	if((m_state != doorState_closed) && (m_state != doorState_open))
 	{
 #ifdef DEBUG_DOOR_MOTOR
-		DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - commmand() info:"));
+		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - commmand() info:"));
 
 #endif
 		return telemetry_cmd_response_nak_not_ready;
@@ -101,26 +101,26 @@ telemetrycommandResponseT CDoorMotor_GarageDoor::command(doorCommandE _command)
 			((m_state == doorState_open) && (_command == doorCommand_close)))
 	{
 #ifdef DEBUG_DOOR_MOTOR
-		DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - cycling relay."));
+		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - cycling relay."));
 #endif
 
 		// Remember my last valid command
 		m_lastCommand = _command;
 
 		// Start the relay on timer
-		m_relayTimer.start(CDoorMotor_GarageDoor_relayMS);
+		m_relayTimer.start(CDoorMotor_GarrageDoor_relayMS);
 		digitalWrite(PIN_DOOR_RELAY, RELAY_ON);
 
 		// Set door state to moving and start the stuck timer
 		m_state = doorState_moving;
-		m_stuckDoorTimer.start(CDoorMotor_GarageDoor_stuck_door_delayMS);
+		m_stuckDoorTimer.start(CDoorMotor_GarrageDoor_stuck_door_delayMS);
 
 		return telemetry_cmd_response_ack;
 	}
 	else
 	{
 #ifdef DEBUG_DOOR_MOTOR
-		DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - not commanded to opposite state, ignoring."));
+		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - not commanded to opposite state, ignoring."));
 
 #endif
 		return telemetry_cmd_response_ack;
@@ -129,7 +129,7 @@ telemetrycommandResponseT CDoorMotor_GarageDoor::command(doorCommandE _command)
 	return telemetry_cmd_response_nak_internal_error;
 }
 
-doorStateE CDoorMotor_GarageDoor::getDoorState()
+doorStateE CDoorMotor_GarrageDoor::getDoorState()
 {
 	if(uglySwitches())
 		return doorState_unknown;
@@ -137,7 +137,7 @@ doorStateE CDoorMotor_GarageDoor::getDoorState()
 	return m_state;
 }
 
-void CDoorMotor_GarageDoor::tick()
+void CDoorMotor_GarrageDoor::tick()
 {
 	// Don't do anything if the switches are in an ugly state
 	if(uglySwitches())
@@ -170,15 +170,15 @@ void CDoorMotor_GarageDoor::tick()
 		{
 
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - Started in unknown state, seeking a switch."));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - Started in unknown state, seeking a switch."));
 #endif
 			// Start the relay on timer
-			m_relayTimer.start( CDoorMotor_GarageDoor_relayMS);
+			m_relayTimer.start( CDoorMotor_GarrageDoor_relayMS);
 			digitalWrite(PIN_DOOR_RELAY, RELAY_ON);
 
 			// And a delay to see if we ever get there
 			m_state = doorState_unknown;
-			m_stuckDoorTimer.start(CDoorMotor_GarageDoor_stuck_door_delayMS);
+			m_stuckDoorTimer.start(CDoorMotor_GarrageDoor_stuck_door_delayMS);
 
 			m_seekKnownStateRelayCommandIssued = true;
 		}
@@ -187,7 +187,7 @@ void CDoorMotor_GarageDoor::tick()
 		if(getSwitches() == doorSwitchOpen)
 		{
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - found open-switch, now in known state."));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - found open-switch, now in known state."));
 #endif
 			m_state = doorState_open;
 			m_seekingKnownState = false;
@@ -196,7 +196,7 @@ void CDoorMotor_GarageDoor::tick()
 		else if(getSwitches() == doorSwitchClosed)
 		{
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - found closed-switch, now in known state."));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - found closed-switch, now in known state."));
 #endif
 			m_state = doorState_closed;
 			m_seekingKnownState = false;
@@ -205,7 +205,7 @@ void CDoorMotor_GarageDoor::tick()
 		else if(m_stuckDoorTimer.getState() == CMilliTimerState_expired)
 		{
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - time is up, entering unknown state."));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - time is up, entering unknown state."));
 #endif
 			m_state = doorState_unknown;
 			m_seekingKnownState = false;
@@ -224,7 +224,7 @@ void CDoorMotor_GarageDoor::tick()
 		if((m_lastCommand == doorCommand_open) && (getSwitches() == doorSwitchOpen))
 		{
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - reached command state: open"));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - reached command state: open"));
 #endif
 			m_state = doorState_open;
 			m_stuckDoorTimer.reset();
@@ -232,7 +232,7 @@ void CDoorMotor_GarageDoor::tick()
 		else if((m_lastCommand == doorCommand_close) && (getSwitches() == doorSwitchClosed))
 		{
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - reached command state: closed"));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - reached command state: closed"));
 #endif
 			m_state = doorState_closed;
 			m_stuckDoorTimer.reset();
@@ -240,7 +240,7 @@ void CDoorMotor_GarageDoor::tick()
 		else if(m_stuckDoorTimer.getState() == CMilliTimerState_expired)
 		{
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - *** Timed out waiting for commanded state. ***"));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - *** Timed out waiting for commanded state. ***"));
 #endif
 			m_state = doorState_unknown;
 			m_stuckDoorTimer.reset();
@@ -251,9 +251,9 @@ void CDoorMotor_GarageDoor::tick()
 		// Closed from the open state
 		if((m_state == doorState_open) && (getSwitches() == doorSwitchClosed))
 		{
-	#ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - spontaneous change to: closed"));
-	#endif
+#ifdef DEBUG_DOOR_MOTOR
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - spontaneous change to: closed"));
+#endif
 			m_state = doorState_closed;
 		}
 		break;
@@ -262,9 +262,9 @@ void CDoorMotor_GarageDoor::tick()
 		// Open from the closed state
 		if((m_state == doorState_closed) && (getSwitches() == doorSwitchOpen))
 		{
-	#ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - spontaneous change to: open"));
-	#endif
+#ifdef DEBUG_DOOR_MOTOR
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - spontaneous change to: open"));
+#endif
 			m_state = doorState_open;
 		}
 		break;
@@ -278,9 +278,9 @@ void CDoorMotor_GarageDoor::tick()
 		break;
 
 	default:
-	#ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - *** UNKNOWN STATE VALUE ***"));
-	#endif
+#ifdef DEBUG_DOOR_MOTOR
+		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - *** UNKNOWN STATE VALUE ***"));
+#endif
 		return;
 	}
 
@@ -294,15 +294,15 @@ void CDoorMotor_GarageDoor::tick()
 		// opening the door, so wait until we know for sure.
 		if(m_lostSwitchesTimer.getState() == CMilliTimerState_notSet)
 		{
-			m_lostSwitchesTimer.start(CDoorMotor_GarageDoor_stuck_door_delayMS);
+			m_lostSwitchesTimer.start(CDoorMotor_GarrageDoor_stuck_door_delayMS);
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - both door switches open. Is the door moving?"));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - both door switches open. Is the door moving?"));
 #endif
 		}
 		else if(m_lostSwitchesTimer.getState() == CMilliTimerState_expired)
 		{
 #ifdef DEBUG_DOOR_MOTOR
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - spontaneous change to: * UNKNOWN *"));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - spontaneous change to: * UNKNOWN *"));
 #endif
 			m_lostSwitchesTimer.reset();
 			m_state = doorState_unknown;
@@ -312,7 +312,7 @@ void CDoorMotor_GarageDoor::tick()
 	{
 #ifdef DEBUG_DOOR_MOTOR
 		if(m_lostSwitchesTimer.getState() == CMilliTimerState_running)
-			DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - switches recovered before timeout to unknown state."));
+			DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - switches recovered before timeout to unknown state."));
 #endif
 		m_lostSwitchesTimer.reset();
 	}
@@ -334,7 +334,7 @@ static unsigned int rawSwitchRead()
 	return mask;
 }
 
-unsigned int CDoorMotor_GarageDoor::getSwitches()
+unsigned int CDoorMotor_GarrageDoor::getSwitches()
 {
 	unsigned int mask1 = 0;
 	unsigned int mask2 = 0;
@@ -348,17 +348,18 @@ unsigned int CDoorMotor_GarageDoor::getSwitches()
 
 		mask2 = rawSwitchRead();
 		delay(2);
-	} while(mask1 != mask2);
+	}
+	while(mask1 != mask2);
 
 	return mask2;
 }
 
-bool CDoorMotor_GarageDoor::uglySwitches()
+bool CDoorMotor_GarrageDoor::uglySwitches()
 {
 	if((getSwitches() & doorSwitchOpen) && (getSwitches() & doorSwitchClosed))
 	{
 #ifdef DEBUG_DOOR_MOTOR
-		DEBUG_SERIAL.println(PMS("CDoorMotor_GarageDoor - *** Ugly switches ***"));
+		DEBUG_SERIAL.println(PMS("CDoorMotor_GarrageDoor - *** Ugly switches ***"));
 #endif
 		return true;
 	}

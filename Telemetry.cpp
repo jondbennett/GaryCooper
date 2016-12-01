@@ -194,7 +194,7 @@ void CTelemetry::parseChar(unsigned char _c)
 		case ',':
 			// Process this term
 			m_receiveChecksum ^= _c;
-			// Fall through
+		// Fall through
 
 		case '*':
 			processTerm();

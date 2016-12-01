@@ -25,7 +25,7 @@
 CDoorController::CDoorController()
 {
 	m_correctState = doorState_unknown;
-	m_command = (doorCommandE)-1;
+	m_command = (doorCommandE) - 1;
 
 	m_sunriseOffset = 0.;
 	m_sunsetOffset = 0.;
@@ -102,14 +102,14 @@ void CDoorController::tick()
 		bool raiseAlarm = false;
 		// Check for failure to open
 		if((m_command == doorCommand_open) &&
-			(getDoorMotor()->getDoorState() != doorState_open))
+				(getDoorMotor()->getDoorState() != doorState_open))
 		{
 			raiseAlarm = true;
 		}
 
 		// Check for failure to close
 		if((m_command == doorCommand_close) &&
-			(getDoorMotor()->getDoorState() != doorState_closed))
+				(getDoorMotor()->getDoorState() != doorState_closed))
 		{
 			raiseAlarm = true;
 		}
@@ -278,7 +278,7 @@ telemetrycommandResponseT CDoorController::command(doorCommandE _command)
 	if(!getDoorMotor())
 	{
 #ifdef DEBUG_DOOR_CONTROLLER
-			DEBUG_SERIAL.println(PMS("CDoorController - command - *** NO DOOR MOTOR FOUND ***"));
+		DEBUG_SERIAL.println(PMS("CDoorController - command - *** NO DOOR MOTOR FOUND ***"));
 #endif
 
 		return telemetry_cmd_response_nak_internal_error;

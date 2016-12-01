@@ -122,7 +122,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 	int sunsetOffset = (int)_value;
 	bool lightOn = (_value > 0.) ? true : false;
 	int stuckDoorDelay = (int) _value;
-	doorCommandE doorCommand = (_value > 0.)? doorCommand_open : doorCommand_close;
+	doorCommandE doorCommand = (_value > 0.) ? doorCommand_open : doorCommand_close;
 
 	telemetrycommandResponseT commandResponse;
 
@@ -213,7 +213,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 		}
 		break;
 
-		case telemetry_command_setExtraIlluminationEvening:
+	case telemetry_command_setExtraIlluminationEvening:
 #ifdef DEBUG_COMMAND_PROCESSOR
 		DEBUG_SERIAL.print(PMS("CCommand - setExtraLightTimeEvening: "));
 		DEBUG_SERIAL.println(_value);
@@ -286,7 +286,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_loadDefaults:
 #ifdef DEBUG_COMMAND_PROCESSOR
-			DEBUG_SERIAL.println(PMS("CCommand - *** RESET ALL SETTINGS ***"));
+		DEBUG_SERIAL.println(PMS("CCommand - *** RESET ALL SETTINGS ***"));
 #endif
 		g_saveController.updateHeader(0xfe);
 		loadSettings();
@@ -308,10 +308,10 @@ void CCommand::processCommand_V1(int _tag, double _value)
 void CCommand::ackCommand(int _tag, double _value)
 {
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - acking Tag: "));
-		DEBUG_SERIAL.print(_tag);
-		DEBUG_SERIAL.print(PMS("  Value: "));
-		DEBUG_SERIAL.println(_value);
+	DEBUG_SERIAL.print(PMS("CCommand - acking Tag: "));
+	DEBUG_SERIAL.print(_tag);
+	DEBUG_SERIAL.print(PMS("  Value: "));
+	DEBUG_SERIAL.println(_value);
 #endif
 	g_telemetry.transmissionStart();
 	g_telemetry.sendTerm(telemetry_tag_command_ack);
@@ -323,12 +323,12 @@ void CCommand::ackCommand(int _tag, double _value)
 void CCommand::nakCommand(int _tag, double _value, telemetrycommandResponseT _reason)
 {
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - *** Nacking Tag: "));
-		DEBUG_SERIAL.print(_tag);
-		DEBUG_SERIAL.print(PMS("  Value: "));
-		DEBUG_SERIAL.print(_value);
-		DEBUG_SERIAL.print(PMS("  Reason: "));
-		DEBUG_SERIAL.println(_reason);
+	DEBUG_SERIAL.print(PMS("CCommand - *** Nacking Tag: "));
+	DEBUG_SERIAL.print(_tag);
+	DEBUG_SERIAL.print(PMS("  Value: "));
+	DEBUG_SERIAL.print(_value);
+	DEBUG_SERIAL.print(PMS("  Reason: "));
+	DEBUG_SERIAL.println(_reason);
 #endif
 	g_telemetry.transmissionStart();
 	g_telemetry.sendTerm(telemetry_tag_command_nak);

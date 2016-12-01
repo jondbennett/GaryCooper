@@ -12,10 +12,10 @@
 // motor (such as stepper motors) can be used with minimal
 // change to the other software, especially the CDoorController class.
 ////////////////////////////////////////////////////////////
-#define CDoorMotor_GarageDoor_relayMS (500)				// Time to keep relay on for toggle
-#define CDoorMotor_GarageDoor_stuck_door_delayMS	(15000)	// Fifteen seconds should do it
+#define CDoorMotor_GarrageDoor_relayMS (500)				// Time to keep relay on for toggle
+#define CDoorMotor_GarrageDoor_stuck_door_delayMS	(15000)	// Fifteen seconds should do it
 
-class CDoorMotor_GarageDoor : public IDoorMotor
+class CDoorMotor_GarrageDoor : public IDoorMotor
 {
 protected:
 	CMilliTimer m_relayTimer;			// Relay on timer
@@ -39,8 +39,8 @@ protected:
 	bool uglySwitches();
 
 public:
-	CDoorMotor_GarageDoor();
-	virtual ~CDoorMotor_GarageDoor();
+	CDoorMotor_GarrageDoor();
+	virtual ~CDoorMotor_GarrageDoor();
 
 	virtual void setup();
 
