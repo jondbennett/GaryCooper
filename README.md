@@ -77,7 +77,7 @@ Status and error information is transmitted back to the house. The status info
 lets us know when the door opens and closes, and when the light is on. The
 error information is to alert us to GPS lock problems, the door being stuck,
 and such things. I have another repository here - its name is Veronica.
-[Veronica](https://github.com/jondbennett/Veronica) is a wxWidgets application
+[Veronica](https://github.com/jondbennett/wxVeronica) is a wxWidgets application
 that runs in the house. It provides voice notification of various coop events
 and error/warning notifications. It can also send configuration changes back to
 Gary to alter the door and light schedule, or to remotely open/close the door
