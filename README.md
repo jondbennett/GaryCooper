@@ -40,7 +40,7 @@ The files "sunriset.h" and "sunriset.cpp" were downloaded as-is from the:
 http://www.stjarnhimlen.se/
 
 <p align="center">
-  <img src="GaryCooper/Photo/GC.png"/>
+  <img src="Photo/GC.png"/>
 </p>
 
 More photos here: http://jondbennett.com/photo-galleries/52-garycooper-chicken-coop-door-controller
