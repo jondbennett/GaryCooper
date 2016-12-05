@@ -65,21 +65,26 @@ void CBeepController::tick()
 
 	case Beep_Start:
 		tone(m_iBeepOutPin, m_iFreq, m_iOnTime);	// Start the tone
-		m_ulTimer = millis() + m_iOnTime;			// Set the timer for ending millis
+		m_ulBeginningTime = millis();
 		setState(Beep_On);
 		break;
 
 	case Beep_On:
-		if(millis() >= m_ulTimer)				// Timer expired?
+		/* Following line relies on overflow behavior of unsigned long,
+		*  and requires that m_iOnTime not be negative. */
+		if(millis() - m_ulBeginningTime >= m_iOnTime)	// Time expired?
 		{
+			/*^^^is noTone() below redundant with 3rd arg to tone() above? */
 			noTone(m_iBeepOutPin);				// Stop the tone
-			m_ulTimer = millis() + m_iOffTime;	// Set the off time
+			m_ulBeginningTime = millis();
 			setState(Beep_Off);					// Go to off-time state
 		}
 		break;
 
 	case Beep_Off:
-		if(millis() >= m_ulTimer)				// Off timer expired?
+		/* Following line relies on overflow behavior of unsigned long,
+		*  and requires that m_iOffTime not be negative. */
+		if(millis() - m_ulBeginningTime >= m_iOffTime)	// Off time expired?
 		{
 			if(!m_bAlarm && (m_iRepeats > 0))	// Decrement the repeat counter?
 				--m_iRepeats;					// Not if there is an alarm

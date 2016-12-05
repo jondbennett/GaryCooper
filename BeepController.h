@@ -19,7 +19,7 @@ class CBeepController
 private:
 	Beep_StateT m_eState;
 
-	unsigned long m_ulTimer;
+        unsigned long m_ulBeginningTime; // Unit is 1 millisecond. (millis())
 
 	void setState(Beep_StateT _eState);
 
