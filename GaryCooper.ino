@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#include <PMS.h>
 #include <GPSParser.h>
 #include <SaveController.h>
 
@@ -63,7 +62,7 @@ bool g_heartbeat = false;
 void saveSettings(bool _defaults)
 {
 #ifdef DEBUG_SETTINGS
-	DEBUG_SERIAL.print(PMS("Save settings... "));
+	DEBUG_SERIAL.print(F("Save settings... "));
 #endif // DEBUG_SETTINGS
 	// Make sure the header is correct
 	g_saveController.updateHeader(GARYCOOPER_DATA_VERSION);
@@ -76,14 +75,14 @@ void saveSettings(bool _defaults)
 	g_lightController.saveSettings(g_saveController, _defaults);
 
 #ifdef DEBUG_SETTINGS
-	DEBUG_SERIAL.println(PMS("complete."));
+	DEBUG_SERIAL.println(F("complete."));
 #endif
 }
 
 void loadSettings()
 {
 #ifdef DEBUG_SETTINGS
-	DEBUG_SERIAL.print(PMS("Load settings checking header version: "));
+	DEBUG_SERIAL.print(F("Load settings checking header version: "));
 #endif // DEBUG_SETTINGS
 
 	// If the data version is incorrect then we need to update the EEPROM
@@ -92,27 +91,27 @@ void loadSettings()
 
 #ifdef DEBUG_SETTINGS
 	DEBUG_SERIAL.print(headerVersion);
-	DEBUG_SERIAL.print(PMS(" - "));
+	DEBUG_SERIAL.print(F(" - "));
 #endif
 	if(headerVersion != GARYCOOPER_DATA_VERSION)
 	{
 #ifdef DEBUG_SETTINGS
-		DEBUG_SERIAL.println(PMS("INCORRECT."));
+		DEBUG_SERIAL.println(F("INCORRECT."));
 
 		// Save defaults from object constructors
-		DEBUG_SERIAL.println(PMS("Saving default settings."));
+		DEBUG_SERIAL.println(F("Saving default settings."));
 #endif
 		saveSettings(true);
 	}
 	else
 	{
 #ifdef DEBUG_SETTINGS
-		DEBUG_SERIAL.println(PMS("CORRECT."));
+		DEBUG_SERIAL.println(F("CORRECT."));
 #endif
 	}
 
 #ifdef DEBUG_SETTINGS
-	DEBUG_SERIAL.println(PMS("Loading settings... "));
+	DEBUG_SERIAL.println(F("Loading settings... "));
 #endif
 
 	// Make sure we start at the beginning
@@ -122,7 +121,7 @@ void loadSettings()
 	g_lightController.loadSettings(g_saveController);
 
 #ifdef DEBUG_SETTINGS
-	DEBUG_SERIAL.println(PMS("Load settings complete."));
+	DEBUG_SERIAL.println(F("Load settings complete."));
 #endif
 }
 
@@ -208,7 +207,7 @@ void loop()
 	g_doorController.tick();
 
 	// Send telemetry
-	if(g_telemetryUpdateTimer.getState() == CMilliTimerState_expired)
+	if(g_telemetryUpdateTimer.getState() == CMilliTimer::expired)
 	{
 		// Blink the LED
 		g_heartbeat = !g_heartbeat;
@@ -235,7 +234,7 @@ void loop()
 	// If the update timer has completed then
 	// read the GPS data and check the time to
 	// see if anything needs to be done
-	if(g_timeCheckTimer.getState() == CMilliTimerState_expired)
+	if(g_timeCheckTimer.getState() == CMilliTimer::expired)
 	{
 		// Prep for next update
 		if(g_GPSParser.getGPSData().m_GPSLocked)
@@ -272,7 +271,7 @@ void debugPrintDoubleTime(double _t, bool _newline)
 	int hour = (int)_t;
 	int minute = 60. * (_t - hour);
 	DEBUG_SERIAL.print(hour);
-	DEBUG_SERIAL.print(PMS(":"));
+	DEBUG_SERIAL.print(F(":"));
 	DEBUG_SERIAL.print(minute);
 	if(_newline) DEBUG_SERIAL.println();
 }
@@ -307,37 +306,37 @@ void reportError(telemetryErrorE _errorTag, bool _set)
 	switch(_errorTag)
 	{
 	case telemetry_error_GPS_no_data:
-		errorString = PMS("telemetry_error_GPS_no_data");
+		errorString = F("telemetry_error_GPS_no_data");
 		beepCount = 1;
 		break;
 
 	case telemetry_error_GPS_bad_data:
-		errorString = PMS("telemetry_error_GPS_bad_data");
+		errorString = F("telemetry_error_GPS_bad_data");
 		beepCount = 2;
 		break;
 
 	case telemetry_error_GPS_not_locked:
-		errorString = PMS("telemetry_error_GPS_not_locked");
+		errorString = F("telemetry_error_GPS_not_locked");
 		beepCount = 3;
 		break;
 
 	case telemetry_error_suncalc_invalid_time:
-		errorString = PMS("telemetry_error_suncalc_invalid_time");
+		errorString = F("telemetry_error_suncalc_invalid_time");
 		beepCount = 4;
 		break;
 
 	case telemetry_error_no_door_motor:
-		errorString = PMS("telemetry_error_no_door_motor");
+		errorString = F("telemetry_error_no_door_motor");
 		beepCount = 5;
 		break;
 
 	case telemetry_error_door_motor_unknown_state:
-		errorString = PMS("telemetry_error_door_motor_unknown_state");
+		errorString = F("telemetry_error_door_motor_unknown_state");
 		beepCount = 6;
 		break;
 
 	case telemetry_error_door_motor_unknown_not_responding:
-		errorString = PMS("telemetry_error_door_motor_unknown_not_responding");
+		errorString = F("telemetry_error_door_motor_unknown_not_responding");
 		beepCount = 7;
 		break;
 
@@ -349,7 +348,7 @@ void reportError(telemetryErrorE _errorTag, bool _set)
 	DEBUG_SERIAL.println();
 	if(_set)
 	{
-		DEBUG_SERIAL.print(PMS("*** SET ERROR: "));
+		DEBUG_SERIAL.print(F("*** SET ERROR: "));
 #ifdef BEEP_ON_ERROR
 		g_beepController.beep(BEEP_FREQ_ERROR, 100, 50, beepCount);
 #else
@@ -358,7 +357,7 @@ void reportError(telemetryErrorE _errorTag, bool _set)
 	}
 	else
 	{
-		DEBUG_SERIAL.print(PMS("*** CLEAR ERROR: "));
+		DEBUG_SERIAL.print(F("*** CLEAR ERROR: "));
 	}
 	DEBUG_SERIAL.println(errorString);
 	DEBUG_SERIAL.println();

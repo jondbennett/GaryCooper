@@ -99,7 +99,7 @@ typedef enum
 	telemetry_cmd_response_nak_not_ready,
 	telemetry_cmd_response_nak_internal_error,
 
-} telemetrycommandResponseT;
+} telemetrycommandResponseE;
 
 // Door controller stuff
 #define GARY_COOPER_DOOR_MAX_TIME_OFFSET (120)	// Sunrise / sunset +/- two hours in minutes

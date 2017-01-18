@@ -6,44 +6,47 @@
 
 ////////////////////////////////////
 // State enums
-typedef enum
-{
-	Beep_Idle = 0,
-	Beep_Start,
-	Beep_On,
-	Beep_Off,
-} Beep_StateT;
+
 
 class CBeepController
 {
+public:
+	typedef enum
+	{
+		beepIdle = 0,
+		beepStart,
+		beepOn,
+		beepOff,
+	} beepStateE;
+
 private:
-	Beep_StateT m_eState;
+	beepStateE m_state;
 
-	unsigned long m_ulBeginningTime; // Unit is 1 millisecond. (millis())
+	unsigned long m_beginningTime; // Unit is 1 millisecond. (millis())
 
-	void setState(Beep_StateT _eState);
+	void setState(beepStateE _state);
 
-	int m_iFreq;
-	int m_iOnTime;
-	int m_iOffTime;
-	int m_iRepeats;
+	int m_freq;
+	unsigned long m_onTime;
+	unsigned long m_offTime;
+	int m_repeats;
 
-	bool m_bAlarm;
+	bool m_alarm;
 
-	int m_iBeepOutPin;
-	int m_iBeepGndPin;
+	int m_beepOutPin;
+	int m_beepGndPin;
 
 public:
-	CBeepController(int _iPinOut, int _iPinGnd = -1);
-	Beep_StateT state()
+	CBeepController(int _pinOut, int _pinGnd = -1);
+	beepStateE state()
 	{
-		return m_eState;
+		return m_state;
 	}
 
 	void setup();
 	void tick();
 
-	void beep(int _iFreq, int _iOnTime, int _iOffTime, int _iRepeats);
+	void beep(int _freq, unsigned long _onTime, unsigned long _offTime, int _repeats);
 };
 
 #define BEEP_FREQ_BEST		(4000)		// Hz
@@ -51,6 +54,6 @@ public:
 #define BEEP_FREQ_ERROR		(4000)
 #define BEEP_FREQ_INFO		(2000)
 
-extern CBeepController g_oBeepController;
+extern CBeepController g_beepController;
 #endif
 

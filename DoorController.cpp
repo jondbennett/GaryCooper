@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////////////////
 #include <Arduino.h>
 
-#include <PMS.h>
 #include <GPSParser.h>
 #include <SaveController.h>
 
@@ -72,13 +71,13 @@ void CDoorController::loadSettings(CSaveController &_saveController)
 	setStuckDoorDelay(stuckDoorDelay);
 
 #ifdef DEBUG_DOOR_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CDoorController - sunrise offset is: "));
+	DEBUG_SERIAL.print(F("CDoorController - sunrise offset is: "));
 	DEBUG_SERIAL.println(getSunriseOffset());
 
-	DEBUG_SERIAL.print(PMS("CDoorController - sunset offset is :"));
+	DEBUG_SERIAL.print(F("CDoorController - sunset offset is :"));
 	DEBUG_SERIAL.println(getSunsetOffset());
 
-	DEBUG_SERIAL.print(PMS("CDoorController - stuck door delay :"));
+	DEBUG_SERIAL.print(F("CDoorController - stuck door delay :"));
 	DEBUG_SERIAL.println(getStuckDoorDelay());
 	DEBUG_SERIAL.println();
 #endif
@@ -97,7 +96,7 @@ void CDoorController::tick()
 	// I'm not interested in fixing it.
 
 	// Check to see if the door is stuck
-	if(m_stuckDoorTimer.getState() == CMilliTimerState_expired)
+	if(m_stuckDoorTimer.getState() == CMilliTimer::expired)
 	{
 		bool raiseAlarm = false;
 		// Check for failure to open
@@ -148,7 +147,7 @@ void CDoorController::checkTime()
 	if(!getDoorMotor())
 	{
 #ifdef DEBUG_DOOR_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CDoorController - no door motor found."));
+		DEBUG_SERIAL.println(F("CDoorController - no door motor found."));
 		DEBUG_SERIAL.println();
 #endif
 		reportError(telemetry_error_no_door_motor, true);
@@ -165,7 +164,7 @@ void CDoorController::checkTime()
 	{
 
 #ifdef DEBUG_DOOR_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CDoorController - door motor in unknown state."));
+		DEBUG_SERIAL.println(F("CDoorController - door motor in unknown state."));
 #endif
 		reportError(telemetry_error_door_motor_unknown_state, true);
 		return;
@@ -181,11 +180,11 @@ void CDoorController::checkTime()
 	double doorCloseTime = getDoorCloseTime();
 
 #ifdef DEBUG_DOOR_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CDoorController - door open from: "));
+	DEBUG_SERIAL.print(F("CDoorController - door open from: "));
 	debugPrintDoubleTime(doorOpenTime, false);
-	DEBUG_SERIAL.print(PMS(" - "));
+	DEBUG_SERIAL.print(F(" - "));
 	debugPrintDoubleTime(doorCloseTime, false);
-	DEBUG_SERIAL.println(PMS(" (UTC)"));
+	DEBUG_SERIAL.println(F(" (UTC)"));
 #endif
 
 	// Validate the values and report telemetry
@@ -226,26 +225,26 @@ void CDoorController::checkTime()
 
 #ifdef DEBUG_DOOR_CONTROLLER
 		if(m_correctState == doorState_open)
-			DEBUG_SERIAL.println(PMS("CDoorController - opening coop door."));
+			DEBUG_SERIAL.println(F("CDoorController - opening coop door."));
 		else
-			DEBUG_SERIAL.println(PMS("CDoorController - closing coop door."));
+			DEBUG_SERIAL.println(F("CDoorController - closing coop door."));
 #endif
 	}
 
 #ifdef DEBUG_DOOR_CONTROLLER
 	if(m_correctState)
-		DEBUG_SERIAL.println(PMS("CDoorController - coop door should be OPEN."));
+		DEBUG_SERIAL.println(F("CDoorController - coop door should be OPEN."));
 	else
-		DEBUG_SERIAL.println(PMS("CDoorController - coop door should be CLOSED."));
+		DEBUG_SERIAL.println(F("CDoorController - coop door should be CLOSED."));
 
 	doorStateE doorState = getDoorMotor()->getDoorState();
-	DEBUG_SERIAL.print(PMS("CDoorController - door motor reports: "));
+	DEBUG_SERIAL.print(F("CDoorController - door motor reports: "));
 
-	DEBUG_SERIAL.println((doorState == doorState_open) ? PMS("open.") :
-						 (doorState == doorState_closed) ? PMS("closed.") :
-						 (doorState == doorState_moving) ? PMS("moving") :
-						 (doorState == doorState_unknown) ? PMS("UNKNOWN.") :
-						 PMS("*** INVALID ***"));
+	DEBUG_SERIAL.println((doorState == doorState_open) ? F("open.") :
+						 (doorState == doorState_closed) ? F("closed.") :
+						 (doorState == doorState_moving) ? F("moving") :
+						 (doorState == doorState_unknown) ? F("UNKNOWN.") :
+						 F("*** INVALID ***"));
 	DEBUG_SERIAL.println();
 #endif
 }
@@ -272,13 +271,13 @@ void CDoorController::sendTelemetry()
 	g_telemetry.transmissionEnd();
 }
 
-telemetrycommandResponseT CDoorController::command(doorCommandE _command)
+telemetrycommandResponseE CDoorController::command(doorCommandE _command)
 {
 	// This had better work
 	if(!getDoorMotor())
 	{
 #ifdef DEBUG_DOOR_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CDoorController - command - *** NO DOOR MOTOR FOUND ***"));
+		DEBUG_SERIAL.println(F("CDoorController - command - *** NO DOOR MOTOR FOUND ***"));
 #endif
 
 		return telemetry_cmd_response_nak_internal_error;
@@ -291,7 +290,7 @@ telemetrycommandResponseT CDoorController::command(doorCommandE _command)
 	// Remember the command for checking door response
 	m_command = _command;
 
-	telemetrycommandResponseT response = getDoorMotor()->command(_command);
+	telemetrycommandResponseE response = getDoorMotor()->command(_command);
 
 	if(response == telemetry_cmd_response_ack)
 	{

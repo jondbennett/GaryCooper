@@ -8,19 +8,19 @@
 // =================================================
 // Setup my locals
 // =================================================
-CBeepController::CBeepController(int _iPinOut, int _iPinGnd)
+CBeepController::CBeepController(int _pinOut, int _pinGnd)
 {
-	m_iFreq = 0;
-	m_iOnTime = 0;
-	m_iOffTime = 0;
-	m_iRepeats = 0;
+	m_freq = 0;
+	m_onTime = 0;
+	m_offTime = 0;
+	m_repeats = 0;
 
-	m_bAlarm = false;
+	m_alarm = false;
 
-	m_iBeepOutPin = _iPinOut;
-	m_iBeepGndPin = _iPinGnd;
+	m_beepOutPin = _pinOut;
+	m_beepGndPin = _pinGnd;
 
-	setState(Beep_Idle);
+	setState(beepIdle);
 }
 
 // =================================================
@@ -29,26 +29,26 @@ CBeepController::CBeepController(int _iPinOut, int _iPinGnd)
 void CBeepController::setup()
 {
 	// Set my output pin modes
-	pinMode(m_iBeepOutPin, OUTPUT);
-	digitalWrite(m_iBeepOutPin, LOW);
+	pinMode(m_beepOutPin, OUTPUT);
+	digitalWrite(m_beepOutPin, LOW);
 
 	// Set a ground for the speaker
-	if(m_iBeepGndPin > 0)
+	if(m_beepGndPin > 0)
 	{
-		pinMode(m_iBeepGndPin, OUTPUT);
-		digitalWrite(m_iBeepGndPin, LOW);
+		pinMode(m_beepGndPin, OUTPUT);
+		digitalWrite(m_beepGndPin, LOW);
 	}
 
 	// Stop the tone (if any)
-	noTone(m_iBeepOutPin);
+	noTone(m_beepOutPin);
 
 	// Terminate the alarm if any
-	m_bAlarm = false;
+	m_alarm = false;
 }
 
-void CBeepController::setState(Beep_StateT _eState)
+void CBeepController::setState(beepStateE _state)
 {
-	m_eState = _eState;
+	m_state = _state;
 	tick();
 }
 
@@ -57,42 +57,42 @@ void CBeepController::setState(Beep_StateT _eState)
 // =================================================
 void CBeepController::tick()
 {
-	switch(m_eState)
+	switch(m_state)
 	{
 	default:
-	case Beep_Idle:
+	case beepIdle:
 		break;
 
-	case Beep_Start:
-		tone(m_iBeepOutPin, m_iFreq, m_iOnTime);	// Start the tone
-		m_ulBeginningTime = millis();
-		setState(Beep_On);
+	case beepStart:
+		tone(m_beepOutPin, m_freq, m_onTime);	// Start the tone
+		m_beginningTime = millis();
+		setState(beepOn);
 		break;
 
-	case Beep_On:
+	case beepOn:
 		/* Following line relies on overflow behavior of unsigned long,
-		*  and requires that m_iOnTime not be negative. */
-		if(millis() - m_ulBeginningTime >= m_iOnTime)	// Time expired?
+		*  and requires that m_onTime not be negative. */
+		if(millis() - m_beginningTime >= m_onTime)	// Time expired?
 		{
 			/*^^^is noTone() below redundant with 3rd arg to tone() above? */
-			noTone(m_iBeepOutPin);				// Stop the tone
-			m_ulBeginningTime = millis();
-			setState(Beep_Off);					// Go to off-time state
+			noTone(m_beepOutPin);				// Stop the tone
+			m_beginningTime = millis();
+			setState(beepOff);					// Go to off-time state
 		}
 		break;
 
-	case Beep_Off:
+	case beepOff:
 		/* Following line relies on overflow behavior of unsigned long,
-		*  and requires that m_iOffTime not be negative. */
-		if(millis() - m_ulBeginningTime >= m_iOffTime)	// Off time expired?
+		*  and requires that m_offTime not be negative. */
+		if(millis() - m_beginningTime >= m_offTime)	// Off time expired?
 		{
-			if(!m_bAlarm && (m_iRepeats > 0))	// Decrement the repeat counter?
-				--m_iRepeats;					// Not if there is an alarm
+			if(!m_alarm && (m_repeats > 0))	// Decrement the repeat counter?
+				--m_repeats;					// Not if there is an alarm
 
-			if(m_iRepeats > 0)					// Repeat the on-off cycle?
-				setState(Beep_Start);			// Start the cycle again
+			if(m_repeats > 0)					// Repeat the on-off cycle?
+				setState(beepStart);			// Start the cycle again
 			else
-				setState(Beep_Idle);			// All done repeating, so go to idle
+				setState(beepIdle);			// All done repeating, so go to idle
 		}
 		break;
 	}
@@ -101,28 +101,26 @@ void CBeepController::tick()
 // =================================================
 // Initiate beep cycle
 // =================================================
-void CBeepController::beep(int _iFreq, int _iOnTime, int _iOffTime, int _iRepeats)
+void CBeepController::beep(int _freq, unsigned long _onTime, unsigned long _offTime, int _repeats)
 {
 	// Hold alarm state regardless of other requests
-	if(m_bAlarm) return;
+	if(m_alarm) return;
 
 	// Validate the value
-	if(_iFreq < 32) return;
-	if(_iOnTime < 0) return;
-	if(_iOffTime < 0) return;
-	if(_iRepeats < 1) return;
+	if(_freq < 32) return;
+	if(_repeats < 1) return;
 
 	// Clear the old tone
-	noTone(m_iBeepOutPin);
+	noTone(m_beepOutPin);
 
 	// Remember the values
-	m_iFreq =  _iFreq;
-	m_iOnTime = _iOnTime;
-	m_iOffTime = _iOffTime;
-	m_iRepeats = _iRepeats;
+	m_freq =  _freq;
+	m_onTime = _onTime;
+	m_offTime = _offTime;
+	m_repeats = _repeats;
 
 	// Start the beeping
-	setState(Beep_Start);
+	setState(beepStart);
 }
 
 

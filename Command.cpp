@@ -4,7 +4,6 @@
 
 #include <SaveController.h>
 #include <GPSParser.h>
-#include <PMS.h>
 
 #include "ICommInterface.h"
 #include "Telemetry.h"
@@ -32,7 +31,7 @@ CCommand::~CCommand()
 void CCommand::startReception()
 {
 #ifdef DEBUG_COMMAND_PROCESSOR_INTERFACE
-	DEBUG_SERIAL.println(PMS("CCommand - Command Starting"));
+	DEBUG_SERIAL.println(F("CCommand - Command Starting"));
 #endif
 	m_term0 = telemetry_tag_invalid;
 	m_term1 = 0.;
@@ -42,9 +41,9 @@ void CCommand::receiveTerm(int _index, const char *_value)
 {
 #ifdef DEBUG_COMMAND_PROCESSOR_INTERFACE
 	String valStr(_value);
-	DEBUG_SERIAL.print(PMS("CCommand - Adding term: "));
+	DEBUG_SERIAL.print(F("CCommand - Adding term: "));
 	DEBUG_SERIAL.print(_index);
-	DEBUG_SERIAL.print(PMS(" = "));
+	DEBUG_SERIAL.print(F(" = "));
 	DEBUG_SERIAL.println(valStr);
 #endif
 
@@ -69,7 +68,7 @@ void CCommand::receiveTerm(int _index, const char *_value)
 void CCommand::receiveChecksumCorrect()
 {
 #ifdef DEBUG_COMMAND_PROCESSOR_INTERFACE
-	DEBUG_SERIAL.println(PMS("CCommand - received checksum correct."));
+	DEBUG_SERIAL.println(F("CCommand - received checksum correct."));
 #endif
 	processCommand(m_term0, m_term1);
 }
@@ -77,7 +76,7 @@ void CCommand::receiveChecksumCorrect()
 void CCommand::receiveChecksumError()
 {
 #ifdef DEBUG_COMMAND_PROCESSOR_INTERFACE
-	DEBUG_SERIAL.println(PMS("CCommand - received checksum error."));
+	DEBUG_SERIAL.println(F("CCommand - received checksum error."));
 #endif
 }
 
@@ -87,7 +86,7 @@ void CCommand::processCommand(int _tag, double _value)
 	if(_tag == telemetry_command_version)
 	{
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - set telemetry version: "));
+		DEBUG_SERIAL.print(F("CCommand - set telemetry version: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 
@@ -105,7 +104,7 @@ void CCommand::processCommand(int _tag, double _value)
 		if(m_version == TELEMETRY_VERSION_INVALID)
 		{
 #ifdef DEBUG_COMMAND_PROCESSOR
-			DEBUG_SERIAL.println(PMS("CCommand - command rejected (version not set)."));
+			DEBUG_SERIAL.println(F("CCommand - command rejected (version not set)."));
 #endif
 			nakCommand(_tag, _value, telemetry_cmd_response_nak_version_not_set);
 		}
@@ -124,14 +123,14 @@ void CCommand::processCommand_V1(int _tag, double _value)
 	int stuckDoorDelay = (int) _value;
 	doorCommandE doorCommand = (_value > 0.) ? doorCommand_open : doorCommand_close;
 
-	telemetrycommandResponseT commandResponse;
+	telemetrycommandResponseE commandResponse;
 
 	// Act on the command
 	switch(_tag)
 	{
 	case telemetry_command_setSunriseOffset:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - setSunriseOffset: "));
+		DEBUG_SERIAL.print(F("CCommand - setSunriseOffset: "));
 		DEBUG_SERIAL.println(sunriseOffset);
 #endif
 		commandResponse = g_doorController.setSunriseOffset(sunriseOffset);
@@ -152,7 +151,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_setSunsetOffset:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - setSunsetOffset: "));
+		DEBUG_SERIAL.print(F("CCommand - setSunsetOffset: "));
 		DEBUG_SERIAL.println(sunsetOffset);
 #endif
 		commandResponse = g_doorController.setSunsetOffset(sunsetOffset);
@@ -173,7 +172,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_setMinimumDayLength:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - setMinimumDayLength: "));
+		DEBUG_SERIAL.print(F("CCommand - setMinimumDayLength: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		commandResponse = g_lightController.setMinimumDayLength(_value);
@@ -194,7 +193,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_setExtraIlluminationMorning:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - setExtraLightTimeMorning: "));
+		DEBUG_SERIAL.print(F("CCommand - setExtraLightTimeMorning: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		commandResponse = g_lightController.setExtraLightTimeMorning(_value);
@@ -215,7 +214,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_setExtraIlluminationEvening:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - setExtraLightTimeEvening: "));
+		DEBUG_SERIAL.print(F("CCommand - setExtraLightTimeEvening: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		commandResponse = g_lightController.setExtraLightTimeEvening(_value);
@@ -236,7 +235,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_forceDoor:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - force door command: "));
+		DEBUG_SERIAL.print(F("CCommand - force door command: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		commandResponse = g_doorController.command(doorCommand);
@@ -252,7 +251,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_forceLight:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - force light command: "));
+		DEBUG_SERIAL.print(F("CCommand - force light command: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		commandResponse = g_lightController.command(lightOn);
@@ -268,7 +267,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_setStuckDoorDelay:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - set stuck door delay: "));
+		DEBUG_SERIAL.print(F("CCommand - set stuck door delay: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		commandResponse = g_doorController.setStuckDoorDelay(stuckDoorDelay);
@@ -286,7 +285,7 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	case telemetry_command_loadDefaults:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.println(PMS("CCommand - *** RESET ALL SETTINGS ***"));
+		DEBUG_SERIAL.println(F("CCommand - *** RESET ALL SETTINGS ***"));
 #endif
 		g_saveController.updateHeader(0xfe);
 		loadSettings();
@@ -295,9 +294,9 @@ void CCommand::processCommand_V1(int _tag, double _value)
 
 	default:
 #ifdef DEBUG_COMMAND_PROCESSOR
-		DEBUG_SERIAL.print(PMS("CCommand - Invalid command tag: "));
+		DEBUG_SERIAL.print(F("CCommand - Invalid command tag: "));
 		DEBUG_SERIAL.print(_tag);
-		DEBUG_SERIAL.print(PMS(" value: "));
+		DEBUG_SERIAL.print(F(" value: "));
 		DEBUG_SERIAL.println(_value);
 #endif
 		nakCommand(_tag, _value, telemetry_cmd_response_nak_invalid_command);
@@ -308,9 +307,9 @@ void CCommand::processCommand_V1(int _tag, double _value)
 void CCommand::ackCommand(int _tag, double _value)
 {
 #ifdef DEBUG_COMMAND_PROCESSOR
-	DEBUG_SERIAL.print(PMS("CCommand - acking Tag: "));
+	DEBUG_SERIAL.print(F("CCommand - acking Tag: "));
 	DEBUG_SERIAL.print(_tag);
-	DEBUG_SERIAL.print(PMS("  Value: "));
+	DEBUG_SERIAL.print(F("  Value: "));
 	DEBUG_SERIAL.println(_value);
 #endif
 	g_telemetry.transmissionStart();
@@ -320,14 +319,14 @@ void CCommand::ackCommand(int _tag, double _value)
 	g_telemetry.transmissionEnd();
 }
 
-void CCommand::nakCommand(int _tag, double _value, telemetrycommandResponseT _reason)
+void CCommand::nakCommand(int _tag, double _value, telemetrycommandResponseE _reason)
 {
 #ifdef DEBUG_COMMAND_PROCESSOR
-	DEBUG_SERIAL.print(PMS("CCommand - *** Nacking Tag: "));
+	DEBUG_SERIAL.print(F("CCommand - *** Nacking Tag: "));
 	DEBUG_SERIAL.print(_tag);
-	DEBUG_SERIAL.print(PMS("  Value: "));
+	DEBUG_SERIAL.print(F("  Value: "));
 	DEBUG_SERIAL.print(_value);
-	DEBUG_SERIAL.print(PMS("  Reason: "));
+	DEBUG_SERIAL.print(F("  Reason: "));
 	DEBUG_SERIAL.println(_reason);
 #endif
 	g_telemetry.transmissionStart();

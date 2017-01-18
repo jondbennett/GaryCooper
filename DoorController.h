@@ -15,7 +15,7 @@ public:
 
 	virtual void setup() = 0;
 
-	virtual telemetrycommandResponseT command(doorCommandE _command) = 0;
+	virtual telemetrycommandResponseE command(doorCommandE _command) = 0;
 	virtual doorStateE getDoorState() = 0;
 
 	virtual void tick() = 0;
@@ -46,7 +46,7 @@ public:
 		return m_stuckDoorS;
 	}
 
-	telemetrycommandResponseT setStuckDoorDelay(int _delay)
+	telemetrycommandResponseE setStuckDoorDelay(int _delay)
 	{
 		if(_delay >= GARY_COOPER_MIN_DOOR_DELAY && _delay <= GARY_COOPER_MAX_DOOR_DELAY)
 		{
@@ -62,7 +62,7 @@ public:
 		return m_sunriseOffset;
 	}
 
-	telemetrycommandResponseT setSunriseOffset(int _sunriseOffset)
+	telemetrycommandResponseE setSunriseOffset(int _sunriseOffset)
 	{
 		if(_sunriseOffset >= -GARY_COOPER_DOOR_MAX_TIME_OFFSET && _sunriseOffset <= GARY_COOPER_DOOR_MAX_TIME_OFFSET)
 		{
@@ -78,7 +78,7 @@ public:
 		return m_sunsetOffset;
 	}
 
-	telemetrycommandResponseT setSunsetOffset(int _sunsetOffset)
+	telemetrycommandResponseE setSunsetOffset(int _sunsetOffset)
 	{
 		if(_sunsetOffset >= -GARY_COOPER_DOOR_MAX_TIME_OFFSET && _sunsetOffset <= GARY_COOPER_DOOR_MAX_TIME_OFFSET)
 		{
@@ -100,7 +100,7 @@ public:
 	void checkTime();
 	void sendTelemetry();
 
-	telemetrycommandResponseT command(doorCommandE _command);
+	telemetrycommandResponseE command(doorCommandE _command);
 };
 
 #endif

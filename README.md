@@ -100,17 +100,13 @@ More [implementation photos.](http://jondbennett.com/photo-galleries/52-garycoop
 
 #### Naming conventions
 
-- I* pure virtual class (i for interface?)
+- I* pure virtual class (i for interface)
 - C* normal class (c for class)
-- *_T typedef ???
-- *_E enum ???
+- *_T typedef
+- *_E enum
 - m_* member variables (object attribute)
-- g_* global
 - _* function/method argument
-- *_i* integer?
-- *_b* boolean?
-- *_e* enum?
-- *_ui* unsigned int?
-- *_ul* unsigned long?
-- *_p* pointer? (but to what?)
+- g_* global
+- s_* static
+
 

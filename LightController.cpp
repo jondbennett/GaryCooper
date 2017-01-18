@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////////////////
 #include <Arduino.h>
 
-#include <PMS.h>
 #include <GPSParser.h>
 #include <SaveController.h>
 
@@ -82,13 +81,13 @@ void CLightController::loadSettings(CSaveController &_saveController)
 	setExtraLightTimeEvening(_saveController.readDouble());
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController - minimum day length is: "));
+	DEBUG_SERIAL.print(F("CLightController - minimum day length is: "));
 	DEBUG_SERIAL.println(getMinimumDayLength());
 
-	DEBUG_SERIAL.print(PMS("CLightController - morning extra light time is: "));
+	DEBUG_SERIAL.print(F("CLightController - morning extra light time is: "));
 	DEBUG_SERIAL.println(getExtraLightTimeMorning());
 
-	DEBUG_SERIAL.print(PMS("CLightController - evening extra light time is: "));
+	DEBUG_SERIAL.print(F("CLightController - evening extra light time is: "));
 	DEBUG_SERIAL.println(getExtraLightTimeEvening());
 
 #endif
@@ -137,7 +136,7 @@ void CLightController::checkTime()
 	if(dayLength > m_minimumDayLength)
 	{
 #ifdef DEBUG_LIGHT_CONTROLLER
-		DEBUG_SERIAL.println(PMS("CLightController - this day is long enough, no supplemental light needed."));
+		DEBUG_SERIAL.println(F("CLightController - this day is long enough, no supplemental light needed."));
 #endif
 		supplementalIllumination = false;
 	}
@@ -173,35 +172,35 @@ void CLightController::checkTime()
 	m_lastCorrectState = newCorrectState;
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController - chicken day length is: "));
+	DEBUG_SERIAL.print(F("CLightController - chicken day length is: "));
 	debugPrintDoubleTime(dayLength);
 
 	if(supplementalIllumination)
 	{
-		DEBUG_SERIAL.print(PMS("CLightController - supplemental lighting duration is: "));
+		DEBUG_SERIAL.print(F("CLightController - supplemental lighting duration is: "));
 		debugPrintDoubleTime(m_minimumDayLength - dayLength);
 	}
 
-	DEBUG_SERIAL.print(PMS("CLightController - chicken mid day (UTC): "));
+	DEBUG_SERIAL.print(F("CLightController - chicken mid day (UTC): "));
 	debugPrintDoubleTime(midDay);
 
-	DEBUG_SERIAL.print(PMS("CLightController - morning light on (UTC): "));
+	DEBUG_SERIAL.print(F("CLightController - morning light on (UTC): "));
 	debugPrintDoubleTime(m_morningLightOnTime, false);
 
-	DEBUG_SERIAL.print(PMS(" - "));
+	DEBUG_SERIAL.print(F(" - "));
 	debugPrintDoubleTime(m_morningLightOffTime);
 
-	DEBUG_SERIAL.print(PMS("CLightController - evening light on (UTC): "));
+	DEBUG_SERIAL.print(F("CLightController - evening light on (UTC): "));
 	debugPrintDoubleTime(m_eveningLightOnTime, false);
 
-	DEBUG_SERIAL.print(PMS(" - "));
+	DEBUG_SERIAL.print(F(" - "));
 	debugPrintDoubleTime(m_eveningLightOffTime);
 
-	DEBUG_SERIAL.print(PMS("CLightController - light should be: "));
-	DEBUG_SERIAL.println((m_lastCorrectState) ? PMS("ON.") : PMS("OFF."));
+	DEBUG_SERIAL.print(F("CLightController - light should be: "));
+	DEBUG_SERIAL.println((m_lastCorrectState) ? F("ON.") : F("OFF."));
 
-	DEBUG_SERIAL.print(PMS("CLightController - light is currently: "));
-	DEBUG_SERIAL.println((m_lightIsOn) ? PMS("on.") : PMS("off."));
+	DEBUG_SERIAL.print(F("CLightController - light is currently: "));
+	DEBUG_SERIAL.println((m_lightIsOn) ? F("on.") : F("off."));
 #endif
 }
 
@@ -225,12 +224,12 @@ void CLightController::sendTelemetry()
 	g_telemetry.transmissionEnd();
 }
 
-telemetrycommandResponseT CLightController::command(bool _on)
+telemetrycommandResponseE CLightController::command(bool _on)
 {
 
 #ifdef DEBUG_LIGHT_CONTROLLER
-	DEBUG_SERIAL.print(PMS("CLightController - setting coop light relay: "));
-	DEBUG_SERIAL.println((_on) ? PMS("ON.") : PMS("OFF."));
+	DEBUG_SERIAL.print(F("CLightController - setting coop light relay: "));
+	DEBUG_SERIAL.println((_on) ? F("ON.") : F("OFF."));
 #endif
 
 	m_lightIsOn = _on;

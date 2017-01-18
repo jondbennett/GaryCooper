@@ -11,16 +11,6 @@ public:
 	virtual void receiveChecksumError() = 0;
 };
 
-
-// State machine states
-typedef enum
-{
-	TParser_S_WaitingForStart = 0,		// Waiting for $
-	TParser_S_ParsingTerms,			// Processing comma-separated terms
-	TParser_S_ProcessingChecksum		// Checking the checksum term
-} TParser_State_T;
-
-
 // Largest distance between commas and such
 #define CTelemetry_TERMSIZE		(16)
 
@@ -29,12 +19,20 @@ class CTelemetry
 {
 protected:
 
+	// State machine states
+	typedef enum
+	{
+		TParser_S_WaitingForStart = 0,		// Waiting for $
+		TParser_S_ParsingTerms,			// Processing comma-separated terms
+		TParser_S_ProcessingChecksum		// Checking the checksum term
+	} CTelemetry_Parser_StateE;
+
 	// Stuff for processing commands from the house
 	ICommunicationInterface *m_commInterface;
 	ITelemetry_ReceiveTarget *m_receiveTarget;
 
 	// Current state machine state
-	TParser_State_T m_state;
+	CTelemetry_Parser_StateE m_state;
 
 	// Location to accumulate data as the parse
 	// progresses. Mostly for the stuff between

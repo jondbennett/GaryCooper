@@ -51,7 +51,7 @@ public:
 		return m_minimumDayLength;
 	}
 
-	telemetrycommandResponseT setMinimumDayLength(double _dayLen)
+	telemetrycommandResponseE setMinimumDayLength(double _dayLen)
 	{
 		if(_dayLen >= GARY_COOPER_LIGHT_MIN_DAY_LENGTH && _dayLen <= GARY_COOPER_LIGHT_MAX_DAY_LENGTH)
 		{
@@ -73,7 +73,7 @@ public:
 		return m_extraLightTimeEvening;
 	}
 
-	telemetrycommandResponseT setExtraLightTimeMorning(double _elt)
+	telemetrycommandResponseE setExtraLightTimeMorning(double _elt)
 	{
 		if(_elt >= GARY_COOPER_LIGHT_MIN_EXTRA && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
 		{
@@ -85,7 +85,7 @@ public:
 	}
 
 
-	telemetrycommandResponseT setExtraLightTimeEvening(double _elt)
+	telemetrycommandResponseE setExtraLightTimeEvening(double _elt)
 	{
 		if(_elt >= GARY_COOPER_LIGHT_MIN_EXTRA && _elt <= GARY_COOPER_LIGHT_MAX_EXTRA)
 		{
@@ -102,7 +102,7 @@ public:
 	void checkTime();
 	void sendTelemetry();
 
-	telemetrycommandResponseT command(bool _on);
+	telemetrycommandResponseE command(bool _on);
 };
 
 #endif

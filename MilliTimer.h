@@ -4,15 +4,17 @@
 #ifndef MilliTimer_h
 #define MilliTimer_h
 
-typedef enum
-{
-	CMilliTimerState_notSet,
-	CMilliTimerState_running,
-	CMilliTimerState_expired,
-} CMilliTimerStateE;
 
 class CMilliTimer
 {
+public:
+	typedef enum
+	{
+		notSet,
+		running,
+		expired,
+	} CMilliTimerStateE;
+
 protected:
 	unsigned long m_time;
 	CMilliTimerStateE m_state;
@@ -21,7 +23,7 @@ public:
 	CMilliTimer()
 	{
 		m_time = 0L;
-		m_state = CMilliTimerState_notSet;
+		m_state = notSet;
 	}
 
 	virtual ~CMilliTimer() {}
@@ -29,15 +31,15 @@ public:
 	void start(unsigned long _time)
 	{
 		m_time = millis() + _time;
-		m_state = CMilliTimerState_running;
+		m_state = running;
 	}
 
 	CMilliTimerStateE getState()
 	{
-		if(m_state == CMilliTimerState_running)
+		if(m_state == running)
 		{
 			if(millis() > m_time)
-				m_state = CMilliTimerState_expired;
+				m_state = expired;
 		}
 
 		return m_state;
@@ -46,7 +48,7 @@ public:
 	void reset()
 	{
 		m_time = 0L;
-		m_state = CMilliTimerState_notSet;
+		m_state = notSet;
 	}
 };
 
