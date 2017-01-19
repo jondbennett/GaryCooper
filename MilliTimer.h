@@ -36,10 +36,9 @@ public:
 
 	CMilliTimerStateE getState()
 	{
-		if(m_state == running)
+		if(m_state == running && millis() > m_time)
 		{
-			if(millis() > m_time)
-				m_state = expired;
+			m_state = expired;
 		}
 
 		return m_state;
