@@ -44,7 +44,7 @@ public:
 
 	virtual void setup();
 
-	virtual telemetrycommandResponseT command(doorCommandE _command);
+	virtual telemetrycommandResponseE command(doorCommandE _command);
 	virtual doorStateE getDoorState();
 	virtual void tick();
 };

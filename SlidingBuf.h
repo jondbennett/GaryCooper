@@ -11,33 +11,33 @@
 class CSlidingBuffer
 {
 protected:
-	unsigned char *m_pBuf;
-	unsigned int m_iBufLen;
-	unsigned int m_iDataLen;
+	unsigned char *m_buf;
+	unsigned int m_bufLen;
+	unsigned int m_dataLen;
 
-	bool m_bCanGrow;
-	void grow(unsigned int _uiNewSize);
+	bool m_canGrow;
+	void grow(unsigned int _newSize);
 
 public:
 	CSlidingBuffer();
 	virtual ~CSlidingBuffer();
-	void setCanGrow(bool _bCanGrow)
+	void setCanGrow(bool _canGrow)
 	{
-		m_bCanGrow = _bCanGrow;
+		m_canGrow = _canGrow;
 	}
 	int bytesAvailable()
 	{
-		return m_iDataLen;
+		return m_dataLen;
 	}
 
-	virtual unsigned int read(unsigned char *_pBuf, unsigned int _iBufSize, bool _bConsume = true);
-	virtual unsigned int write(const unsigned char *_pBuf, unsigned int _iBufSize);
+	virtual unsigned int read(unsigned char *_buf, unsigned int _bufSize, bool _consume = true);
+	virtual unsigned int write(const unsigned char *_buf, unsigned int _bufSize);
 
-	void consume(unsigned int _iConsumeLen);	// Remove data from the head
+	void consume(unsigned int _consumeLen);	// Remove data from the head
 	// of the buffer
 
-	virtual int gets(char *_pBuf, int _iBufLen);
-	virtual bool puts(const char * _pBuf);
+	virtual int gets(char *_buf, int _bufSize);
+	virtual bool puts(const char * _buf);
 };
 
 /////////////////////////////////////////////////////////////////////////

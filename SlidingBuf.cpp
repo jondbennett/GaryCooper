@@ -12,123 +12,123 @@
 
 CSlidingBuffer::CSlidingBuffer()
 {
-	m_pBuf = 0;
-	m_iBufLen = 0;
-	m_iDataLen = 0;
-	m_bCanGrow = true;
+	m_buf = 0;
+	m_bufLen = 0;
+	m_dataLen = 0;
+	m_canGrow = true;
 }
 
 CSlidingBuffer::~CSlidingBuffer()
 {
-	if(m_pBuf) free(m_pBuf);
-	m_pBuf = 0;
-	m_iBufLen = 0;
-	m_iDataLen = 0;
+	if(m_buf) free(m_buf);
+	m_buf = 0;
+	m_bufLen = 0;
+	m_dataLen = 0;
 }
 
-void CSlidingBuffer::grow(unsigned int _uiNewSize)
+void CSlidingBuffer::grow(unsigned int _newSize)
 {
 
 	// Don't be stupid, keep it!
-	if(m_iBufLen > _uiNewSize)
+	if(m_bufLen > _newSize)
 		return;
 
 	unsigned int bufSizeNeeded = 0;
 	unsigned int nBlocks = 0;
 
-	if(!m_bCanGrow)
+	if(!m_canGrow)
 	{
-		if(m_pBuf == 0)
+		if(m_buf == 0)
 		{
-			m_pBuf = (unsigned char *)malloc(CSLIDING_BUFFER_BLOCKSIZE);
+			m_buf = (unsigned char *)malloc(CSLIDING_BUFFER_BLOCKSIZE);
 			return;
 		}
 	}
 
 	// I can grow, so figure out how large
-	nBlocks = (_uiNewSize / CSLIDING_BUFFER_BLOCKSIZE) + 1;
+	nBlocks = (_newSize / CSLIDING_BUFFER_BLOCKSIZE) + 1;
 	bufSizeNeeded = nBlocks * CSLIDING_BUFFER_BLOCKSIZE;
 
 	// Enlarge the buffer
-	if(!m_pBuf)
+	if(!m_buf)
 	{
-		m_pBuf = (unsigned char *)malloc(bufSizeNeeded);
+		m_buf = (unsigned char *)malloc(bufSizeNeeded);
 	}
 	else
 	{
-		m_pBuf = (unsigned char *)realloc(m_pBuf, bufSizeNeeded);
+		m_buf = (unsigned char *)realloc(m_buf, bufSizeNeeded);
 	}
 
-	m_iBufLen = bufSizeNeeded;
+	m_bufLen = bufSizeNeeded;
 }
 
-void CSlidingBuffer::consume(unsigned int _iConsumeLen)
+void CSlidingBuffer::consume(unsigned int _consumeLen)
 {
 	// Ignore stupid requests
-	if(_iConsumeLen < 1) return;
+	if(_consumeLen < 1) return;
 
 	// If this would wipe the buffer, treat it
 	// as a special case
-	if(_iConsumeLen >= m_iDataLen)
+	if(_consumeLen >= m_dataLen)
 	{
-		m_iDataLen = 0;
+		m_dataLen = 0;
 		return;
 	}
 
-	m_iDataLen -= _iConsumeLen;
-	memmove(m_pBuf, m_pBuf + _iConsumeLen, m_iDataLen);
+	m_dataLen -= _consumeLen;
+	memmove(m_buf, m_buf + _consumeLen, m_dataLen);
 }
 
-unsigned int CSlidingBuffer::read(unsigned char *_pBuf, unsigned int _iBufSize, bool _bConsume)
+unsigned int CSlidingBuffer::read(unsigned char *_buf, unsigned int _bufSize, bool _consume)
 {
 	unsigned int amountToCopy = 0;
 
 	amountToCopy = bytesAvailable();
-	if(amountToCopy > (_iBufSize))
-		amountToCopy = _iBufSize;
+	if(amountToCopy > (_bufSize))
+		amountToCopy = _bufSize;
 
 	if(amountToCopy <= 0)
 		return 0;
 
-	memmove(_pBuf, m_pBuf, amountToCopy);
+	memmove(_buf, m_buf, amountToCopy);
 
-	if(_bConsume)
+	if(_consume)
 		consume(amountToCopy);
 
 	return amountToCopy;
 }
 
-unsigned int CSlidingBuffer::write(const unsigned char *_pBuf, unsigned int _iBufSize)
+unsigned int CSlidingBuffer::write(const unsigned char *_buf, unsigned int _bufSize)
 {
 	unsigned int bufSizeNeeded = 0;
 	unsigned int freeSpace = 0;
 	unsigned int lenToAdd = 0;
 
 	// Don't be stupid
-	if(!_pBuf) return 0;
-	if(_iBufSize <= 0) return 0;
+	if(!_buf) return 0;
+	if(_bufSize <= 0) return 0;
 
 	// Do I need to grow?
-	bufSizeNeeded = m_iDataLen + _iBufSize;
-	if(m_iBufLen < bufSizeNeeded)
+	bufSizeNeeded = m_dataLen + _bufSize;
+	if(m_bufLen < bufSizeNeeded)
 		grow(bufSizeNeeded);
 
 	// Now see how much I can add
-	freeSpace = m_iBufLen - m_iDataLen;
-	lenToAdd = (freeSpace < _iBufSize) ? freeSpace : _iBufSize;
+	freeSpace = m_bufLen - m_dataLen;
+	lenToAdd = (freeSpace < _bufSize) ? freeSpace : _bufSize;
 
 	if(lenToAdd == 0)
 		lenToAdd = 0;
 
 	// Now add the data to the end of the buffer
-	memmove(m_pBuf + m_iDataLen, _pBuf, lenToAdd);
-	m_iDataLen += lenToAdd;
+	memmove(m_buf + m_dataLen, _buf, lenToAdd);
+	m_dataLen += lenToAdd;
 
 	return lenToAdd;
 }
 
 #define SKIPWHITESPACE(c) {while(*c && isspace(*c)) ++c; }
-int CSlidingBuffer::gets(char *_pBuf, int _iBufLen)
+int CSlidingBuffer::gets(char *_buf, int _bufSize)
 {
 	unsigned char buf[CSLIDING_BUFFER_BLOCKSIZE];
 	int len = 0;
@@ -161,7 +161,7 @@ int CSlidingBuffer::gets(char *_pBuf, int _iBufLen)
 		// flush the buffer
 		// and start waiting for a
 		// newline
-		if(iBytesAvailable == m_iBufLen)
+		if(iBytesAvailable == m_bufLen)
 		{
 			consume(iBytesAvailable);
 		}
@@ -219,16 +219,16 @@ int CSlidingBuffer::gets(char *_pBuf, int _iBufLen)
 
 	// Perhaps they are sending a null buffer to
 	// query the length needed
-	if(_pBuf == 0)
+	if(_buf == 0)
 		return lineLen;
 
 	// If the buffer is insufficient
 	// then return -1 to note the error
-	if(_iBufLen <= lineLen)
+	if(_bufSize <= lineLen)
 		return -1;
 
 	// Copy the data
-	strcpy(_pBuf, (char *)start);
+	strcpy(_buf, (char *)start);
 
 	// Remove the requested data from
 	// my buffer
@@ -237,11 +237,11 @@ int CSlidingBuffer::gets(char *_pBuf, int _iBufLen)
 	return lineLen;
 }
 
-bool CSlidingBuffer::puts(const char * _pBuf)
+bool CSlidingBuffer::puts(const char * _buf)
 {
-	if(!_pBuf)
+	if(!_buf)
 		return false;
 
-	write((unsigned char *)_pBuf, strlen(_pBuf));
+	write((unsigned char *)_buf, strlen(_buf));
 	return true;
 }

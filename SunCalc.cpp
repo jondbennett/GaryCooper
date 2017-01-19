@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////////////////
 #include <Arduino.h>
 
-#include <PMS.h>
 #include <GPSParser.h>
 #include <SaveController.h>
 
@@ -63,7 +62,7 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	if(!_gpsData.m_GPSLocked)
 	{
 #ifdef DEBUG_SUNCALC
-		DEBUG_SERIAL.println(PMS("CSunCalc - GPS not locked."));
+		DEBUG_SERIAL.println(F("CSunCalc - GPS not locked."));
 #endif
 		reportError(telemetry_error_GPS_not_locked, true);
 		return false;
@@ -74,7 +73,7 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	}
 
 #ifdef DEBUG_SUNCALC
-	DEBUG_SERIAL.println(PMS("CSunCalc - GPS locked."));
+	DEBUG_SERIAL.println(F("CSunCalc - GPS locked."));
 #endif
 
 	// Date
@@ -85,16 +84,16 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	int minute = _gpsData.m_time.m_minute;
 
 #ifdef DEBUG_SUNCALC
-	DEBUG_SERIAL.print(PMS("CSunCalc - Date: "));
+	DEBUG_SERIAL.print(F("CSunCalc - Date: "));
 	DEBUG_SERIAL.print(month);
-	DEBUG_SERIAL.print(PMS("/"));
+	DEBUG_SERIAL.print(F("/"));
 	DEBUG_SERIAL.print(day);
-	DEBUG_SERIAL.print(PMS("/"));
+	DEBUG_SERIAL.print(F("/"));
 	DEBUG_SERIAL.println(year);
 
-	DEBUG_SERIAL.print(PMS("CSunCalc - Lat: "));
+	DEBUG_SERIAL.print(F("CSunCalc - Lat: "));
 	DEBUG_SERIAL.print(lat);
-	DEBUG_SERIAL.print(PMS(" Lon: "));
+	DEBUG_SERIAL.print(F(" Lon: "));
 	DEBUG_SERIAL.println(lon);
 	DEBUG_SERIAL.println();
 #endif
@@ -128,10 +127,10 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 	normalizeTime(m_sunsetTime);
 
 #ifdef DEBUG_SUNCALC
-	DEBUG_SERIAL.print(PMS("CSunCalc - Current Time (UTC): "));
+	DEBUG_SERIAL.print(F("CSunCalc - Current Time (UTC): "));
 	debugPrintDoubleTime(m_currentTime);
 
-	DEBUG_SERIAL.print(PMS("CSunCalc - Sunrise - Sunset (UTC): "));
+	DEBUG_SERIAL.print(F("CSunCalc - Sunrise - Sunset (UTC): "));
 	debugPrintDoubleTime(m_sunriseTime, false);
 	DEBUG_SERIAL.print(" - ");
 	debugPrintDoubleTime(m_sunsetTime);
@@ -144,7 +143,7 @@ bool CSunCalc::processGPSData(CGPSParserData &_gpsData)
 
 void CSunCalc::sendTelemetry()
 {
-	const char *emptyS = PMS("");
+	const char *emptyS = "";
 
 	// Telemetry
 	CGPSParserData gpsData = g_GPSParser.getGPSData();

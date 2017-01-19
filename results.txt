@@ -1,0 +1,59 @@
+=======================================================
+git remote -v
+
+jep	https://github.com/james-prior/chicken-coop.git (fetch)
+jep	https://github.com/james-prior/chicken-coop.git (push)
+origin	https://github.com/jondbennett/GaryCooper (fetch)
+origin	https://github.com/jondbennett/GaryCooper (push)
+
+=========================================================
+git branch -a -v
+
+
+* master                bb57de4 More cleanup
+  remotes/origin/HEAD   -> origin/master
+  remotes/origin/master bb57de4 More cleanup
+
+==========================================================
+git hist --all -20
+
+
+* bb57de4 2016-12-06 17:56:44 -0500 More cleanup (HEAD, origin/master, origin/HEAD, master) [Jon Bennett]
+* c2d2291 2016-12-01 14:50:09 -0500 Rename Veronica to wxVeronica again. [Jon Bennett]
+* 58637ac 2016-12-01 14:48:48 -0500 Formatting cleanup and [Jon Bennett]
+* 989dc01 2016-12-01 14:36:16 -0500 Change Veronica to wxVeronica [Jon Bennett]
+*   0656b25 2016-12-01 14:34:43 -0500 Merge remote-tracking branch 'jep/master' [Jon Bennett]
+|\  
+| * ea73465 2016-11-27 15:23:43 -0500 README.md: Linkify some things. [James Prior]
+| * a619cd5 2016-11-19 01:02:59 -0500 DoorMotor_GarageDoor.h DoorMotor_GarageDoor.cpp: Garrage -> Garage [James Prior]
+| * f124ab6 2016-11-10 20:29:48 -0500 README.md: Polish. [James Prior]
+| * c525fb8 2016-11-10 20:27:12 -0500 README.md: Linkify UTC. [James Prior]
+| * cf739ad 2016-11-10 20:25:33 -0500 README.md: Reword. [James Prior]
+| * 69fcd0e 2016-11-10 20:22:24 -0500 README.md: Listify. [James Prior]
+| * 36bdab5 2016-11-10 20:18:46 -0500 README.md: Fixed spelling and wording. [James Prior]
+| * 8c97cb6 2016-11-10 20:10:37 -0500 README.md: Elide trailing spaces. [James Prior]
+| * de1a7ec 2016-11-10 20:09:34 -0500 README.md: Linkify some things. [James Prior]
+| * 764d92c 2016-11-10 20:02:41 -0500 README.md: Capitalize Arduino. [James Prior]
+| * 88ef34c 2016-11-27 15:09:36 -0500 README.md: Wrapped long line for easier editing (and rebasing). [James Prior]
+* | ba303f3 2016-12-01 14:24:27 -0500 Fix merg conflict [Jon Bennett]
+* | 37fad2c 2016-12-01 10:28:42 -0500 Update README.md [Jon Bennett]
+* | 5f2f4e6 2016-12-01 10:27:45 -0500 Added photo [Jon Bennett]
+* | 365f323 2016-12-01 10:24:56 -0500 Added photo and cleanup [Jon Bennett]
+|/
+
+==========================================================
+git status
+
+
+  
+On branch master
+Your branch is up-to-date with 'origin/master'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	results.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+
