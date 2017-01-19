@@ -16,27 +16,30 @@ public:
 	} CMilliTimerStateE;
 
 protected:
-	unsigned long m_time;
+	unsigned long m_interval;
+	unsigned long m_startingMillis;
+
 	CMilliTimerStateE m_state;
 
 public:
 	CMilliTimer()
 	{
-		m_time = 0L;
-		m_state = notSet;
+		reset();
 	}
 
 	virtual ~CMilliTimer() {}
 
 	void start(unsigned long _time)
 	{
-		m_time = millis() + _time;
+		m_startingMillis = millis();
+		m_interval = _time;
+
 		m_state = running;
 	}
 
 	CMilliTimerStateE getState()
 	{
-		if(m_state == running && millis() > m_time)
+		if((m_state == running) && ((millis() - m_startingMillis) > m_interval))
 		{
 			m_state = expired;
 		}
@@ -46,7 +49,9 @@ public:
 
 	void reset()
 	{
-		m_time = 0L;
+		m_interval = 0;
+		m_startingMillis = 0L;
+
 		m_state = notSet;
 	}
 };
