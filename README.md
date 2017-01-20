@@ -84,8 +84,8 @@ Gary to alter the door and light schedule, or to remotely open/close the door
 or turn the light on and off.
 
 This project depends on my
-[GPSParser](https://github.com/jondbennett/GPSParser),
-[PMS](https://github.com/jondbennett/PMS), and
+[GPSParser](https://github.com/jondbennett/GPSParser)
+and
 [SaveController](https://github.com/jondbennett/SaveController) libraries,
 so you'll need to download them as well.
 
@@ -102,8 +102,8 @@ More [implementation photos.](http://jondbennett.com/photo-galleries/52-garycoop
 
 - I* pure virtual class (i for interface)
 - C* normal class (c for class)
-- *_T typedef
-- *_E enum
+- *T typedef
+- *E enum
 - m_* member variables (object attribute)
 - _* function/method argument
 - g_* global
