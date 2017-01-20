@@ -50,7 +50,7 @@ public:
 	void reset()
 	{
 		m_interval = 0;
-		m_startingMillis = 0L;
+		m_startingMillis = 0;
 
 		m_state = notSet;
 	}
