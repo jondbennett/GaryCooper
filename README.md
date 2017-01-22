@@ -109,4 +109,4 @@ More [implementation photos.](http://jondbennett.com/photo-galleries/52-garycoop
 - g_* global
 - s_* static
 
-
+These naming conventions are not used in sunriset.*.
