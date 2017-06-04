@@ -176,8 +176,8 @@ void loop()
 
 		// Get the data from the serial port
 		GPSDataLen = GPS_SERIAL.available();
-		if(GPSDataLen > sizeof(GPSData - 1))
-			GPSDataLen = sizeof(GPSData - 1);
+		if(GPSDataLen > sizeof(GPSData) - 1)
+			GPSDataLen = sizeof(GPSData) - 1;
 
 		GPSDataLen = GPS_SERIAL.readBytes((unsigned char *)GPSData, GPSDataLen);
 		if(GPSDataLen)
